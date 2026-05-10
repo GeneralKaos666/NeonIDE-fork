@@ -3,7 +3,6 @@ package com.neonide.studio.app.lsp.impl
 import android.content.Intent
 import android.net.LocalSocket
 import android.net.LocalSocketAddress
-import com.termux.shared.logger.Logger
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.neonide.studio.app.lsp.EditorLspController
@@ -14,6 +13,7 @@ import com.neonide.studio.app.lsp.server.KotlinLanguageServer
 import com.neonide.studio.app.lsp.server.KotlinLanguageServerService
 import com.neonide.studio.app.lsp.server.XMLLanguageServer
 import com.neonide.studio.app.lsp.server.XmlLanguageServerService
+import com.termux.shared.logger.Logger
 import com.termux.shared.termux.TermuxConstants
 import io.github.rosemoe.sora.lang.Language
 import io.github.rosemoe.sora.lsp.client.connection.CustomConnectProvider
@@ -24,15 +24,15 @@ import io.github.rosemoe.sora.lsp.editor.LspEditor
 import io.github.rosemoe.sora.lsp.editor.LspLanguage
 import io.github.rosemoe.sora.lsp.editor.LspProject
 import io.github.rosemoe.sora.widget.CodeEditor
+import java.io.File
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.DidChangeConfigurationParams
-import java.io.File
-import java.io.IOException
 
 /**
  * LSP controller built on top of `io.github.rosemoe:editor-lsp`.
@@ -60,9 +60,15 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
     private var current: LspEditor? = null
     private var currentFile: File? = null
 
-    override fun attach(editor: CodeEditor, file: File, wrapperLanguage: Language, projectRoot: File?): Boolean {
+    override fun attach(
+        editor: CodeEditor,
+        file: File,
+        wrapperLanguage: Language,
+        projectRoot: File?
+    ): Boolean {
         // Debug-friendly: fail fast if server doesn't initialize
-        io.github.rosemoe.sora.lsp.requests.Timeout[io.github.rosemoe.sora.lsp.requests.Timeouts.INIT] = 10000
+        io.github.rosemoe.sora.lsp.requests.Timeout[io.github.rosemoe.sora.lsp.requests.Timeouts.INIT] =
+            10000
 
         val serverId = LspUtils.getServerId(file) ?: run {
             detach()
@@ -71,7 +77,14 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
 
         startServer(serverId)
 
-        val desiredRoot = (projectRoot ?: file.parentFile ?: file).let { if (it.isFile) it.parentFile ?: it else it }
+        val desiredRoot = (projectRoot ?: file.parentFile ?: file).let {
+            if (it.isFile) {
+                it.parentFile
+                    ?: it
+            } else {
+                it
+            }
+        }
 
         // If project root changed (user opened a file from a different project), recreate the LSP project
         // so servers get the correct workspace root.
@@ -101,7 +114,11 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
         val lspEditor = try {
             p.getOrCreateEditor(file.absolutePath)
         } catch (t: Throwable) {
-            Logger.logStackTraceWithMessage(TAG, "Failed to create LSP editor for ${file.absolutePath}", t)
+            Logger.logStackTraceWithMessage(
+                TAG,
+                "Failed to create LSP editor for ${file.absolutePath}",
+                t
+            )
             return false
         }
 
@@ -110,7 +127,14 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
 
         val lspLang = editor.editorLanguage
         if (lspLang is LspLanguage) {
-            editor.setEditorLanguage(com.neonide.studio.app.editor.completion.NeonLspLanguageWrapper(lspLang, editor, lspEditor, wrapperLanguage))
+            editor.setEditorLanguage(
+                com.neonide.studio.app.editor.completion.NeonLspLanguageWrapper(
+                    lspLang,
+                    editor,
+                    lspEditor,
+                    wrapperLanguage
+                )
+            )
         }
 
         // Launch connection in background to avoid blocking main thread
@@ -122,11 +146,20 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
                     lspEditor.connect(false)
                 }
                 if (ok) {
-                    Logger.logInfo(TAG, "LSP connected for ${file.absolutePath} (serverId=$serverId)")
+                    Logger.logInfo(
+                        TAG,
+                        "LSP connected for ${file.absolutePath} (serverId=$serverId)"
+                    )
 
                     // Configure server (best-effort) before using advanced features like Javadoc hover
                     runCatching { configureServer(serverId, lspEditor) }
-                        .onFailure { t -> Logger.logStackTraceWithMessage(TAG, "Failed to configure server settings", t) }
+                        .onFailure { t ->
+                            Logger.logStackTraceWithMessage(
+                                TAG,
+                                "Failed to configure server settings",
+                                t
+                            )
+                        }
 
                     current = lspEditor
                     currentFile = file
@@ -135,7 +168,11 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
                     runCatching { lspEditor.dispose() }
                 }
             } catch (t: Throwable) {
-                Logger.logStackTraceWithMessage(TAG, "LSP connect failed for ${file.absolutePath}", t)
+                Logger.logStackTraceWithMessage(
+                    TAG,
+                    "LSP connect failed for ${file.absolutePath}",
+                    t
+                )
                 runCatching { lspEditor.dispose() }
             }
         }
@@ -203,7 +240,7 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
                 val classPathEntry = File(runtimePrefix, "lib").absolutePath
                 val classPathArr = JsonArray().apply { add(classPathEntry) }
                 java.add("classPath", classPathArr)
-                Logger.logDebug(TAG, "Sending java.classPath=[${classPathEntry}]")
+                Logger.logDebug(TAG, "Sending java.classPath=[$classPathEntry]")
 
                 if (docPaths.isNotEmpty()) {
                     val arr = JsonArray()
@@ -217,7 +254,10 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
                     settings = root
                 }
 
-                Logger.logDebug(TAG, "Sending didChangeConfiguration(java.docPath count=${docPaths.size})")
+                Logger.logDebug(
+                    TAG,
+                    "Sending didChangeConfiguration(java.docPath count=${docPaths.size})"
+                )
                 rm.didChangeConfiguration(params)
             }
 
@@ -310,8 +350,14 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
     private fun startServer(serverId: String) {
         val intent = when (serverId) {
             JavaLanguageServer.SERVER_ID -> Intent(context, JavaLanguageServerService::class.java)
-            KotlinLanguageServer.SERVER_ID -> Intent(context, KotlinLanguageServerService::class.java)
+
+            KotlinLanguageServer.SERVER_ID -> Intent(
+                context,
+                KotlinLanguageServerService::class.java
+            )
+
             XMLLanguageServer.SERVER_ID -> Intent(context, XmlLanguageServerService::class.java)
+
             else -> return
         }
         context.startService(intent)
@@ -323,14 +369,12 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
         context.stopService(Intent(context, XmlLanguageServerService::class.java))
     }
 
-    private fun javaDefinition(): LanguageServerDefinition {
-        return CustomLanguageServerDefinition(
-            "java",
-            CustomLanguageServerDefinition.ServerConnectProvider {
-                retryingLocalSocketProvider(JAVA_SOCKET)
-            }
-        )
-    }
+    private fun javaDefinition(): LanguageServerDefinition = CustomLanguageServerDefinition(
+        "java",
+        CustomLanguageServerDefinition.ServerConnectProvider {
+            retryingLocalSocketProvider(JAVA_SOCKET)
+        }
+    )
 
     private fun kotlinDefinitionFor(ext: String): LanguageServerDefinition {
         // Kotlin language server uses the "kotlin" language id but we register per extension.
@@ -342,14 +386,12 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
         )
     }
 
-    private fun xmlDefinition(): LanguageServerDefinition {
-        return CustomLanguageServerDefinition(
-            "xml",
-            CustomLanguageServerDefinition.ServerConnectProvider {
-                retryingLocalSocketProvider(XML_SOCKET)
-            }
-        )
-    }
+    private fun xmlDefinition(): LanguageServerDefinition = CustomLanguageServerDefinition(
+        "xml",
+        CustomLanguageServerDefinition.ServerConnectProvider {
+            retryingLocalSocketProvider(XML_SOCKET)
+        }
+    )
 
     /**
      * Sora's built-in [io.github.rosemoe.sora.lsp.client.connection.LocalSocketStreamConnectionProvider]

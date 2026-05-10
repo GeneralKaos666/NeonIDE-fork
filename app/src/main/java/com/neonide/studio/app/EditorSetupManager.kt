@@ -13,14 +13,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.appbar.MaterialToolbar
 import com.neonide.studio.R
-import com.neonide.studio.FileTreeDrawer
 import com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer
+import com.neonide.studio.filetree.FileTreeDrawer
 import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.event.CreateContextMenuEvent
+import io.github.rosemoe.sora.event.LongPressEvent
 import io.github.rosemoe.sora.event.PublishSearchResultEvent
 import io.github.rosemoe.sora.event.SelectionChangeEvent
 import io.github.rosemoe.sora.event.SideIconClickEvent
-import io.github.rosemoe.sora.event.LongPressEvent
 import io.github.rosemoe.sora.lang.EmptyLanguage
 import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
 import io.github.rosemoe.sora.langs.textmate.registry.ThemeRegistry
@@ -42,10 +42,11 @@ class EditorSetupManager(
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
             activity.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-            android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
             ActivityCompat.requestPermissions(
-                activity, 
-                arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 
+                activity,
+                arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 1
             )
         }
@@ -53,7 +54,11 @@ class EditorSetupManager(
         uiManager.setupAcsBottomSheet()
     }
 
-    fun setupEditor(symbolInput: SymbolInputView, symbols: Array<String>, symbolsInsert: Array<String>) {
+    fun setupEditor(
+        symbolInput: SymbolInputView,
+        symbols: Array<String>,
+        symbolsInsert: Array<String>
+    ) {
         editor.runCatching {
             typefaceText = Typeface.createFromAsset(activity.assets, "JetBrainsMono-Regular.ttf")
         }
@@ -63,35 +68,37 @@ class EditorSetupManager(
         }
         editor.setEditorLanguage(EmptyLanguage())
         editor.props.stickyScroll = true
-        editor.nonPrintablePaintingFlags = 
-            CodeEditor.FLAG_DRAW_WHITESPACE_LEADING or 
-            CodeEditor.FLAG_DRAW_LINE_SEPARATOR or 
-            CodeEditor.FLAG_DRAW_WHITESPACE_IN_SELECTION or 
+        editor.nonPrintablePaintingFlags =
+            CodeEditor.FLAG_DRAW_WHITESPACE_LEADING or
+            CodeEditor.FLAG_DRAW_LINE_SEPARATOR or
+            CodeEditor.FLAG_DRAW_WHITESPACE_IN_SELECTION or
             CodeEditor.FLAG_DRAW_SOFT_WRAP
     }
 
     fun setupEventListeners(
-        xmlDiag: Runnable, 
-        currentFile: () -> File?, 
-        undoItem: () -> MenuItem?, 
+        xmlDiag: Runnable,
+        currentFile: () -> File?,
+        undoItem: () -> MenuItem?,
         redoItem: () -> MenuItem?
     ) {
-        editor.subscribeAlways(SelectionChangeEvent::class.java) { 
+        editor.subscribeAlways(SelectionChangeEvent::class.java) {
             // Position display update is now handled by viewHelper or directly in Compose
         }
-        editor.subscribeAlways(PublishSearchResultEvent::class.java) { 
+        editor.subscribeAlways(PublishSearchResultEvent::class.java) {
         }
         editor.subscribeAlways(ContentChangeEvent::class.java) { ev ->
             editor.postDelayed({ uiManager.updateBtnState(undoItem(), redoItem()) }, 50L)
             val f = currentFile()
             if (f != null && f.extension.equals("xml", ignoreCase = true)) {
-                runCatching { AndroidXmlLanguageEnhancer.applyAdvancedSlashEditIfNeeded(f, editor, ev) }
+                runCatching {
+                    AndroidXmlLanguageEnhancer.applyAdvancedSlashEditIfNeeded(f, editor, ev)
+                }
                 editor.removeCallbacks(xmlDiag)
                 editor.postDelayed(xmlDiag, 180L)
             }
         }
-        editor.subscribeAlways(CreateContextMenuEvent::class.java) { 
-            lspManager.handler.onContextMenuCreated(it) 
+        editor.subscribeAlways(CreateContextMenuEvent::class.java) {
+            lspManager.handler.onContextMenuCreated(it)
         }
         editor.subscribeAlways(LongPressEvent::class.java) { e ->
             val isJava = currentFile()?.extension?.lowercase() == "java"
@@ -107,8 +114,8 @@ class EditorSetupManager(
     }
 
     fun initializeProject(
-        savedInstanceState: Bundle?, 
-        themeManager: EditorThemeAndLanguageManager, 
+        savedInstanceState: Bundle?,
+        themeManager: EditorThemeAndLanguageManager,
         coordinator: EditorCoordinator,
         projectRoot: File?
     ) {
@@ -121,7 +128,7 @@ class EditorSetupManager(
         if (restoredFile?.exists() == true) {
             coordinator.openFileInEditor(restoredFile, restoredFile.name, projectRoot)
             editor.setSelection(
-                savedInstanceState!!.getInt("cursor_line", 0), 
+                savedInstanceState!!.getInt("cursor_line", 0),
                 savedInstanceState.getInt("cursor_column", 0)
             )
         } else {

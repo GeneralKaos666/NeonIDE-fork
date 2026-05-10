@@ -1,7 +1,7 @@
 package com.neonide.studio.app.lsp.server
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 class JavaLanguageServerServiceTest {
 

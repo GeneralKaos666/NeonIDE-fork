@@ -6,10 +6,8 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.widget.Toast
-import androidx.documentfile.provider.DocumentFile
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -18,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,10 +24,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -36,7 +34,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,8 +51,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.AlertDialog
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,33 +67,30 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
-import java.io.File
-
+import androidx.documentfile.provider.DocumentFile
 import com.neonide.studio.R
 import com.neonide.studio.app.SoraEditorActivityK
 import com.neonide.studio.app.home.preferences.WizardPreferences
-import com.termux.shared.termux.TermuxConstants
 import com.neonide.studio.utils.FileUtil
-
+import com.termux.shared.termux.TermuxConstants
+import java.io.File
+import kotlinx.coroutines.launch
 
 @Composable
-fun CreateProjectBottomSheet(
-    onDismiss: () -> Unit
-) {
+fun CreateProjectBottomSheet(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     // Using skipPartiallyExpanded = true for forms prevents jumping when keyboard opens
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
+
     var selectedTemplate by remember { mutableStateOf<ProjectTemplate?>(null) }
     var projectName by remember { mutableStateOf("") }
     var packageName by remember { mutableStateOf("") }
     var isPackageNameManuallyEdited by remember { mutableStateOf(false) }
-    
-    var saveLocation by remember { 
+
+    var saveLocation by remember {
         mutableStateOf(
-            WizardPreferences.getLastSaveLocation(context) 
+            WizardPreferences.getLastSaveLocation(context)
                 ?: File(TermuxConstants.TERMUX_HOME_DIR, "projects").absolutePath
         )
     }
@@ -107,27 +100,34 @@ fun CreateProjectBottomSheet(
 
     val templates = remember { ProjectTemplateRegistry.all() }
 
-    val folderPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val uri = result.data?.data ?: return@rememberLauncherForActivityResult
-        val dir = FileUtil.resolveUriToFile(uri)
+    val folderPickerLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val uri = result.data?.data ?: return@rememberLauncherForActivityResult
+            val dir = FileUtil.resolveUriToFile(uri)
 
-        if (dir != null) {
-            saveLocation = dir.absolutePath
-        } else {
-            Toast.makeText(context, R.string.acs_err_invalid_picked_dir, Toast.LENGTH_SHORT).show()
+            if (dir != null) {
+                saveLocation = dir.absolutePath
+            } else {
+                Toast.makeText(
+                    context,
+                    R.string.acs_err_invalid_picked_dir,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
-    }
 
     fun updatePackageName(name: String, template: ProjectTemplate) {
         val templateRaw = context.getString(template.nameRes).lowercase()
             .replace("project", "")
             .replace("activity", "")
             .trim()
-            
+
         val templateSanitized = templateRaw.replace(Regex("[^a-z0-9]"), "")
         val projectSanitized = name.lowercase().replace(Regex("[^a-z0-9]"), "")
         val prefix = if (templateSanitized.isNotEmpty()) "com.$templateSanitized" else "com.example"
-        
+
         packageName = if (projectSanitized.isNotEmpty()) "$prefix.$projectSanitized" else prefix
     }
 
@@ -153,7 +153,7 @@ fun CreateProjectBottomSheet(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
-                
+
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
                     modifier = Modifier
@@ -165,7 +165,8 @@ fun CreateProjectBottomSheet(
                             template = tpl,
                             onClick = {
                                 selectedTemplate = tpl
-                                val suggestedName = "My" + context.getString(tpl.nameRes).replace(" ", "")
+                                val suggestedName =
+                                    "My" + context.getString(tpl.nameRes).replace(" ", "")
                                 projectName = suggestedName
                                 isPackageNameManuallyEdited = false
                                 updatePackageName(suggestedName, tpl)
@@ -183,7 +184,9 @@ fun CreateProjectBottomSheet(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        ),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Row(
@@ -222,28 +225,38 @@ fun CreateProjectBottomSheet(
 
                     OutlinedTextField(
                         value = projectName,
-                        onValueChange = { 
+                        onValueChange = {
                             projectName = it
                             if (!isPackageNameManuallyEdited) {
                                 updatePackageName(it, selectedTemplate!!)
                             }
                         },
                         label = { Text(stringResource(id = R.string.project_name)) },
-                        leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_add), contentDescription = null) },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_add),
+                                contentDescription = null
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 12.dp),
                         singleLine = true
                     )
-                    
+
                     OutlinedTextField(
                         value = packageName,
-                        onValueChange = { 
+                        onValueChange = {
                             packageName = it
                             isPackageNameManuallyEdited = true
                         },
                         label = { Text(stringResource(id = R.string.package_name)) },
-                        leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_language_android), contentDescription = null) },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_language_android),
+                                contentDescription = null
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 12.dp),
@@ -254,12 +267,22 @@ fun CreateProjectBottomSheet(
                         value = saveLocation,
                         onValueChange = { saveLocation = it },
                         label = { Text(stringResource(id = R.string.project_location)) },
-                        leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_folder), contentDescription = null) },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_folder),
+                                contentDescription = null
+                            )
+                        },
                         trailingIcon = {
-                            IconButton(onClick = { 
-                                folderPickerLauncher.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
+                            IconButton(onClick = {
+                                folderPickerLauncher.launch(
+                                    Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                                )
                             }) {
-                                Icon(painter = painterResource(id = R.drawable.ic_folder), contentDescription = stringResource(id = R.string.browse))
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_folder),
+                                    contentDescription = stringResource(id = R.string.browse)
+                                )
                             }
                         },
                         modifier = Modifier
@@ -344,10 +367,7 @@ fun CreateProjectBottomSheet(
 }
 
 @Composable
-private fun TemplateItem(
-    template: ProjectTemplate,
-    onClick: () -> Unit
-) {
+private fun TemplateItem(template: ProjectTemplate, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -383,7 +403,6 @@ private fun TemplateItem(
     }
 }
 
-
 @Composable
 private fun DropdownField(
     label: String,
@@ -406,7 +425,9 @@ private fun DropdownField(
             onValueChange = {},
             readOnly = true,
             label = { Text(label) },
-            leadingIcon = { Icon(painter = painterResource(id = leadingIconRes), contentDescription = null) },
+            leadingIcon = {
+                Icon(painter = painterResource(id = leadingIconRes), contentDescription = null)
+            },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .menuAnchor()
@@ -442,11 +463,19 @@ private fun createProject(
     onSuccess: () -> Unit
 ) {
     if (!ProjectValidators.isValidProjectName(name)) {
-        Toast.makeText(context, R.string.create_project_error_invalid_name, Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            R.string.create_project_error_invalid_name,
+            Toast.LENGTH_SHORT
+        ).show()
         return
     }
     if (!ProjectValidators.isValidPackageName(pkg)) {
-        Toast.makeText(context, R.string.create_project_error_invalid_package, Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            R.string.create_project_error_invalid_package,
+            Toast.LENGTH_SHORT
+        ).show()
         return
     }
 
@@ -466,12 +495,16 @@ private fun createProject(
             applicationId = pkg,
             minSdk = minSdk.toIntOrNull() ?: 21,
             language = lang,
-            useKts = useKts,
+            useKts = useKts
         )
         WizardPreferences.setLastSaveLocation(context, base.absolutePath)
         WizardPreferences.addRecentProject(context, projectDir.absolutePath)
-        Toast.makeText(context, context.getString(R.string.create_project_success, projectDir.absolutePath), Toast.LENGTH_LONG).show()
-        
+        Toast.makeText(
+            context,
+            context.getString(R.string.create_project_success, projectDir.absolutePath),
+            Toast.LENGTH_LONG
+        ).show()
+
         val intent = Intent(context, SoraEditorActivityK::class.java).apply {
             putExtra(SoraEditorActivityK.EXTRA_PROJECT_DIR, projectDir.absolutePath)
         }

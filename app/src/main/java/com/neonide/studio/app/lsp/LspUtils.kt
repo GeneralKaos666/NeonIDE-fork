@@ -7,12 +7,10 @@ import com.neonide.studio.app.lsp.server.XMLLanguageServer
 import java.io.File
 
 object LspUtils {
-    fun getServerId(file: File): String? {
-        return when (file.extension) {
-            "java" -> JavaLanguageServer.SERVER_ID
-            "kt", "kts" -> KotlinLanguageServer.SERVER_ID
-            "xml" -> XMLLanguageServer.SERVER_ID
-            else -> null
-        }
+    fun getServerId(file: File): String? = when (file.extension) {
+        "java" -> JavaLanguageServer.SERVER_ID
+        "kt", "kts" -> KotlinLanguageServer.SERVER_ID
+        "xml" -> XMLLanguageServer.SERVER_ID
+        else -> null
     }
 }

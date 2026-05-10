@@ -2,8 +2,8 @@ package com.neonide.studio.app.lsp
 
 import io.github.rosemoe.sora.lang.completion.CompletionItemKind
 import org.eclipse.lsp4j.CompletionItem
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 class LspCompletionItemTest {
     @Test
@@ -11,7 +11,7 @@ class LspCompletionItemTest {
         val lspItem = CompletionItem("test")
         lspItem.kind = org.eclipse.lsp4j.CompletionItemKind.Method
         lspItem.detail = "detail"
-        
+
         val item = LspCompletionItem(lspItem, 0)
         assertEquals("test", item.label)
         assertEquals("detail", item.desc)

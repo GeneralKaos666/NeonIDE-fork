@@ -10,6 +10,8 @@ import com.neonide.studio.app.bottomsheet.model.NavigationItem
 import com.neonide.studio.app.lsp.EditorLspController
 import io.github.rosemoe.sora.event.CreateContextMenuEvent
 import io.github.rosemoe.sora.widget.CodeEditor
+import java.io.File
+import java.net.URI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,8 +22,6 @@ import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.ReferenceContext
 import org.eclipse.lsp4j.ReferenceParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import java.io.File
-import java.net.URI
 
 /**
  * Controller for handling LSP-related actions (Definition, References, Hover) and context menus.
@@ -42,12 +42,22 @@ class EditorLspHandler(
     }
 
     fun onContextMenuCreated(event: CreateContextMenuEvent) {
-        event.menu.add(0, MENU_ID_DEFINITION, 0, activity.getString(R.string.acs_menu_go_to_definition))
+        event.menu.add(
+            0,
+            MENU_ID_DEFINITION,
+            0,
+            activity.getString(R.string.acs_menu_go_to_definition)
+        )
             .setOnMenuItemClickListener {
                 handleGoToDefinition(event.position.line, event.position.column)
                 true
             }
-        event.menu.add(0, MENU_ID_REFERENCES, 0, activity.getString(R.string.acs_menu_find_references))
+        event.menu.add(
+            0,
+            MENU_ID_REFERENCES,
+            0,
+            activity.getString(R.string.acs_menu_find_references)
+        )
             .setOnMenuItemClickListener {
                 handleFindReferences(event.position.line, event.position.column)
                 true
@@ -62,7 +72,7 @@ class EditorLspHandler(
 
     fun handleGoToDefinition(line: Int, column: Int) {
         val currentFile = activity.currentFile ?: return
-        
+
         val lspEditor = lspController.currentEditor() ?: return
         val rm = lspEditor.requestManager ?: return
         val params = DefinitionParams().apply {
@@ -84,7 +94,12 @@ class EditorLspHandler(
                     activity.navigateTo(loc.uri, loc.range.start.line, loc.range.start.character)
                 } else {
                     val items = locations.map { loc ->
-                        NavigationItem(loc.uri, loc.range.start.line, loc.range.start.character, "${File(URI.create(loc.uri)).name}:${loc.range.start.line + 1}")
+                        NavigationItem(
+                            loc.uri,
+                            loc.range.start.line,
+                            loc.range.start.character,
+                            "${File(URI.create(loc.uri)).name}:${loc.range.start.line + 1}"
+                        )
                     }
                     bottomSheetVm.setNavigationResults(items)
                     showNavigationTab()
@@ -132,7 +147,12 @@ class EditorLspHandler(
                         } else {
                             ""
                         }
-                        NavigationItem(loc.uri, loc.range.start.line, loc.range.start.character, "$fileName:${loc.range.start.line + 1} $lineContent")
+                        NavigationItem(
+                            loc.uri,
+                            loc.range.start.line,
+                            loc.range.start.character,
+                            "$fileName:${loc.range.start.line + 1} $lineContent"
+                        )
                     }
                     bottomSheetVm.setNavigationResults(items)
                     showNavigationTab()

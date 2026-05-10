@@ -2,10 +2,10 @@ package com.neonide.studio.app.buildoutput
 
 import android.os.Handler
 import android.os.Looper
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Buffered build output broadcaster using StateFlow.
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 object BuildOutputBuffer {
 
     private const val FLUSH_DELAY_MS = 150L
-    private const val MAX_CHARS = 700_000        // ~0.7MB text cap
+    private const val MAX_CHARS = 700_000 // ~0.7MB text cap
     private const val TRIM_TO_CHARS = 550_000
 
     private val handler = Handler(Looper.getMainLooper())
@@ -73,9 +73,11 @@ object BuildOutputBuffer {
         var newCache = _output.value + chunk
         if (newCache.length > MAX_CHARS) {
             val trimmedCount = newCache.length - TRIM_TO_CHARS
-            newCache = "... [trimmed $trimmedCount chars for performance] ...\n\n" + newCache.takeLast(TRIM_TO_CHARS)
+            newCache =
+                "... [trimmed $trimmedCount chars for performance] ...\n\n" +
+                newCache.takeLast(TRIM_TO_CHARS)
         }
-        
+
         _output.value = newCache
     }
 }

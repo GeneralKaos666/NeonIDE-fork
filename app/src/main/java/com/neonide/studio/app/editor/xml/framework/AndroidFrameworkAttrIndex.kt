@@ -20,6 +20,7 @@ object AndroidFrameworkAttrIndex {
     private const val TAG = "AndroidFwAttrIndex"
 
     @Volatile private var cached: Set<String>? = null
+
     @Volatile private var cachedSource: File? = null
 
     /**
@@ -33,7 +34,9 @@ object AndroidFrameworkAttrIndex {
         synchronized(this) {
             if (cached != null) return true
 
-            val baseEnv = runCatching { GradleProjectActions.getGradleEnvironment(context) }.getOrNull() ?: emptyMap()
+            val baseEnv =
+                runCatching { GradleProjectActions.getGradleEnvironment(context) }.getOrNull()
+                    ?: emptyMap()
             val sdkDir = AndroidSdkUtils.resolveSdkDir(baseEnv)
                 ?: File(TermuxConstants.TERMUX_HOME_DIR_PATH, "android-sdk").takeIf { it.exists() }
 
@@ -87,9 +90,10 @@ object AndroidFrameworkAttrIndex {
         val platforms = File(sdkDir, "platforms")
         if (!platforms.exists() || !platforms.isDirectory) return null
 
-        val dirs = platforms.listFiles()?.filter { it.isDirectory && it.name.startsWith("android-") }
-            ?.sortedByDescending { it.name.removePrefix("android-").toIntOrNull() ?: 0 }
-            ?: emptyList()
+        val dirs =
+            platforms.listFiles()?.filter { it.isDirectory && it.name.startsWith("android-") }
+                ?.sortedByDescending { it.name.removePrefix("android-").toIntOrNull() ?: 0 }
+                ?: emptyList()
 
         for (d in dirs) {
             val f = File(d, "data/res/values/attrs.xml")

@@ -61,7 +61,7 @@ object ElfInspector {
         val is64Bit: Boolean,
         val littleEndian: Boolean,
         val machine: Int,
-        val interpreter: String?,
+        val interpreter: String?
     )
 
     fun readInfo(file: File): Info? {
@@ -94,12 +94,11 @@ object ElfInspector {
         }.getOrNull()
     }
 
-    private fun isValidElf(header: ByteArray): Boolean {
-        return header[MAGIC_OFFSET_0].toInt() == MAGIC_0 &&
+    private fun isValidElf(header: ByteArray): Boolean =
+        header[MAGIC_OFFSET_0].toInt() == MAGIC_0 &&
             header[MAGIC_OFFSET_1].toInt() == MAGIC_1 &&
             header[MAGIC_OFFSET_2].toInt() == MAGIC_2 &&
             header[MAGIC_OFFSET_3].toInt() == MAGIC_3
-    }
 
     private fun findInterpreter(b2: ByteBuffer, allBytes: ByteArray, is64: Boolean): String? {
         val (ePhoff, ePhentsize, ePhnum) = getElfHeaderInfo(b2, is64)
@@ -108,7 +107,9 @@ object ElfInspector {
         var interpreter: String? = null
         for (i in ZERO_I until ePhnum) {
             val off = (ePhoff + i.toLong() * ePhentsize.toLong()).toInt()
-            if (off >= ZERO_I && off + ePhentsize <= allBytes.size && b2.getInt(off + PH_PTYPE_OFFSET) == PT_INTERP) {
+            if (off >= ZERO_I && off + ePhentsize <= allBytes.size &&
+                b2.getInt(off + PH_PTYPE_OFFSET) == PT_INTERP
+            ) {
                 interpreter = getInterpreterString(b2, allBytes, off, is64)
                 break
             }
@@ -133,7 +134,12 @@ object ElfInspector {
         return Triple(ePhoff, ePhentsize, ePhnum)
     }
 
-    private fun getInterpreterString(b2: ByteBuffer, allBytes: ByteArray, off: Int, is64: Boolean): String? {
+    private fun getInterpreterString(
+        b2: ByteBuffer,
+        allBytes: ByteArray,
+        off: Int,
+        is64: Boolean
+    ): String? {
         val pOffset: Long
         val pFilesz: Long
         if (is64) {
@@ -149,7 +155,9 @@ object ElfInspector {
         return if (start in 0 until end) {
             val raw = allBytes.copyOfRange(start, end)
             raw.takeWhile { it != 0.toByte() }.toByteArray().toString(Charsets.UTF_8)
-        } else null
+        } else {
+            null
+        }
     }
 
     /**
@@ -176,13 +184,11 @@ object ElfInspector {
         return !isGlibc && isAndroid
     }
 
-    private fun abiToMachine(abi: String): Int? {
-        return when (abi) {
-            "arm64-v8a" -> EM_AARCH64
-            "armeabi-v7a" -> EM_ARM
-            "x86_64" -> EM_X86_64
-            "x86" -> EM_386
-            else -> null
-        }
+    private fun abiToMachine(abi: String): Int? = when (abi) {
+        "arm64-v8a" -> EM_AARCH64
+        "armeabi-v7a" -> EM_ARM
+        "x86_64" -> EM_X86_64
+        "x86" -> EM_386
+        else -> null
     }
 }

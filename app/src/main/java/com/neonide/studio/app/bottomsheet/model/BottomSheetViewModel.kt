@@ -39,13 +39,14 @@ class BottomSheetViewModel : ViewModel() {
     val status: LiveData<String?> = _status
 
     var isBuilding = false
-    
+
     // Current selected tab index
     private val _selectedTab = MutableLiveData(0)
     val selectedTab: LiveData<Int> = _selectedTab
 
     fun setBuildOutput(text: String) = _buildOutput.postValue(text)
-    fun appendBuildOutput(line: String) = _buildOutput.postValue((_buildOutput.value ?: "") + line + "\n")
+    fun appendBuildOutput(line: String) =
+        _buildOutput.postValue((_buildOutput.value ?: "") + line + "\n")
 
     fun setAppLogs(text: String) = _appLogs.postValue(text)
     fun setIdeLogs(text: String) = _ideLogs.postValue(text)

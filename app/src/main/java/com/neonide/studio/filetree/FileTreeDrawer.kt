@@ -1,4 +1,4 @@
-package com.neonide.studio
+package com.neonide.studio.filetree
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.calculateZoom
@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
@@ -34,7 +35,6 @@ import cafe.adriel.bonsai.core.node.BranchNode
 import cafe.adriel.bonsai.core.node.Node
 import cafe.adriel.bonsai.filesystem.FileSystemBonsaiStyle
 import cafe.adriel.bonsai.filesystem.FileSystemTree
-import androidx.compose.ui.platform.LocalContext
 import com.neonide.studio.utils.ApkInstallUtils
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -44,22 +44,14 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 
 @Composable
-fun FileTreeDrawer(
-    rootPath: String,
-    onFileClick: (String) -> Unit
-) {
-    if (rootPath.isBlank()) {
-        Box(modifier = Modifier.fillMaxSize())
-        return
-    }
-
+fun FileTreeDrawer(rootPath: String, onFileClick: (String) -> Unit) {
     val context = LocalContext.current
     val rootPathState = remember(rootPath) { rootPath.toPath() }
     var refreshTrigger by remember { mutableStateOf(0) }
-    
+
     // --- Zoom State ---
     var uiScale by remember { mutableStateOf(1f) }
-    
+
     // Create a scaled style
     val scaledStyle = remember(uiScale) {
         val base = FileSystemBonsaiStyle()
@@ -75,7 +67,7 @@ fun FileTreeDrawer(
                 fontSize = 12.sp * uiScale
             ),
             // Disable internal horizontal scroll to prevent it from swallowing pinch gestures
-            useHorizontalScroll = false 
+            useHorizontalScroll = false
         )
     }
 
@@ -112,8 +104,8 @@ fun FileTreeDrawer(
                             val cachedMod = dirLastModified[file.absolutePath] ?: 0L
                             if (lastMod != cachedMod) {
                                 val files = file.listFiles()
-                                val snapshot = files?.sortedBy { it.name }?.joinToString { 
-                                    "${it.name}:${it.isDirectory}" 
+                                val snapshot = files?.sortedBy { it.name }?.joinToString {
+                                    "${it.name}:${it.isDirectory}"
                                 } ?: ""
                                 val cachedSnapshot = dirSnapshots[file.absolutePath] ?: ""
                                 if (snapshot != cachedSnapshot) {
@@ -132,21 +124,21 @@ fun FileTreeDrawer(
             }
         }
     }
-    
+
     // Dialogs
     if (actionDialog == "actions" && nodeToAct != null) {
         val file = File(nodeToAct!!.content.toString())
         AlertDialog(
             onDismissRequest = { actionDialog = null },
-            title = { Text("Actions") },
+            title = { Text("Options") },
             text = {
                 Column {
-                    TextButton(onClick = { 
+                    TextButton(onClick = {
                         newName = file.name
                         actionDialog = "rename"
                     }) { Text("Rename") }
-                    TextButton(onClick = { 
-                        actionDialog = "delete" 
+                    TextButton(onClick = {
+                        actionDialog = "delete"
                     }) { Text("Delete") }
                 }
             },
@@ -154,52 +146,34 @@ fun FileTreeDrawer(
         )
     }
 
-    if (actionDialog == "rename" && nodeToAct != null) {
-        AlertDialog(
-            onDismissRequest = { actionDialog = null },
-            title = { Text("Rename") },
-            text = {
-                OutlinedTextField(
-                    value = newName,
-                    onValueChange = { newName = it },
-                    label = { Text("New Name") },
-                    singleLine = true
-                )
+    if (actionDialog == "rename") {
+        RenameDialog(
+            newName = newName,
+            onNameChange = { newName = it },
+            onRename = {
+                val oldFile = File(nodeToAct!!.content.toString())
+                val newFile = File(oldFile.parent, newName)
+                if (oldFile.renameTo(newFile)) {
+                    refreshTrigger++
+                }
+                actionDialog = null
+                nodeToAct = null
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    val oldFile = File(nodeToAct!!.content.toString())
-                    val newFile = File(oldFile.parent, newName)
-                    if (oldFile.renameTo(newFile)) {
-                        refreshTrigger++
-                    }
-                    actionDialog = null
-                    nodeToAct = null
-                }) { Text("Rename") }
-            },
-            dismissButton = {
-                TextButton(onClick = { actionDialog = null }) { Text("Cancel") }
-            }
+            onDismiss = { actionDialog = null }
         )
     }
 
-    if (actionDialog == "delete" && nodeToAct != null) {
-        AlertDialog(
-            onDismissRequest = { actionDialog = null },
-            title = { Text("Delete") },
-            text = { Text("Delete '${File(nodeToAct!!.content.toString()).name}'?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (File(nodeToAct!!.content.toString()).deleteRecursively()) {
-                        refreshTrigger++
-                    }
-                    actionDialog = null
-                    nodeToAct = null
-                }) { Text("Delete") }
+    if (actionDialog == "delete") {
+        DeleteDialog(
+            text = "Delete '${File(nodeToAct!!.content.toString()).name}'?",
+            onDelete = {
+                if (File(nodeToAct!!.content.toString()).deleteRecursively()) {
+                    refreshTrigger++
+                }
+                actionDialog = null
+                nodeToAct = null
             },
-            dismissButton = {
-                TextButton(onClick = { actionDialog = null }) { Text("Cancel") }
-            }
+            onDismiss = { actionDialog = null }
         )
     }
 
@@ -255,4 +229,52 @@ fun FileTreeDrawer(
             }
         }
     }
+}
+
+@Composable
+fun RenameDialog(
+    newName: String,
+    onNameChange: (String) -> Unit,
+    onRename: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {},
+        text = {
+            OutlinedTextField(
+                value = newName,
+                onValueChange = onNameChange
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onRename) {
+                Text("Rename")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun DeleteDialog(text: String, onDelete: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = { Text(text) },
+        title = {},
+        confirmButton = {
+            TextButton(onClick = onDelete) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

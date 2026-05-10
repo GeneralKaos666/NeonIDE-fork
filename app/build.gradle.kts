@@ -29,21 +29,18 @@ android {
             "TERMUX_TASKER_APP_NAME" to "NeonIDE Studio:Tasker",
             "TERMUX_WIDGET_APP_NAME" to "NeonIDE Studio:Widget"
         )
-        
+
         ndk {
             abiFilters += "arm64-v8a"
         }
-        
     }
-    
 
     buildFeatures {
         buildConfig = true
         viewBinding = true
         compose = true
-
     }
-    
+
     kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
@@ -52,7 +49,6 @@ android {
             )
         }
     }
-
 
     signingConfigs {
         getByName("debug") {
@@ -109,8 +105,6 @@ android {
             useLegacyPackaging = true
         }
     }
-    
-    
 }
 
 dependencies {
@@ -118,7 +112,7 @@ dependencies {
     implementation(project(":termux-shared"))
     implementation(project(":bonsai-core"))
     implementation(project(":bonsai-file-system"))
-    
+
     implementation(libs.androidx.core)
     implementation(libs.androidx.appcompat)
     implementation(platform(libs.rosemoe.editor.bom))
@@ -172,7 +166,15 @@ dependencies {
     annotationProcessor(files("libs/annotation-processors.jar", "libs/annotations.jar"))
     annotationProcessor(libs.javapoet)
 
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"), "exclude" to listOf("annotation-processors.jar", "annotations.jar"))))
+    implementation(
+        fileTree(
+            mapOf(
+                "dir" to "libs",
+                "include" to listOf("*.jar"),
+                "exclude" to listOf("annotation-processors.jar", "annotations.jar")
+            )
+        )
+    )
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 

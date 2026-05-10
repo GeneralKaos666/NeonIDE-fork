@@ -6,15 +6,14 @@ import android.net.Uri
 import android.os.Build
 import android.system.Os
 import android.widget.Toast
-
 import com.neonide.studio.R
+import com.termux.app.TermuxActivity
+import com.termux.app.TermuxInstaller
+import com.termux.app.TermuxService
 import com.termux.shared.shell.command.ExecutionCommand.Runner
 import com.termux.shared.shell.command.ExecutionCommand.ShellCreateMode
 import com.termux.shared.termux.TermuxConstants
 import com.termux.shared.termux.TermuxConstants.TERMUX_APP.TERMUX_SERVICE
-import com.termux.app.TermuxInstaller
-import com.termux.app.TermuxService
-import com.termux.app.TermuxActivity
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -26,11 +25,11 @@ object DevKitSetup {
     private const val SETUP_SCRIPT_FILE_NAME = "setup.sh"
     private const val SETUP_SCRIPT_MODE = 455
     private const val BUFFER_SIZE = 8192
-    
+
     // Volatile ensures changes are immediately visible across threads
     @Volatile
     private var isSetupRunning = false
-    
+
     @JvmStatic
     fun startSetup(activity: Activity) {
         android.util.Log.d("DevKitSetup", "startSetup called")
@@ -58,7 +57,6 @@ object DevKitSetup {
                 runScriptInNewTerminalSession(activity, newSetupScriptFile.absolutePath)
 
                 activity.startActivity(Intent(activity, TermuxActivity::class.java))
-
             } catch (e: android.content.ActivityNotFoundException) {
                 Toast.makeText(
                     activity,
@@ -109,11 +107,7 @@ object DevKitSetup {
     }
 
     @Throws(IOException::class)
-    private fun copyAssetToFile(
-        activity: Activity,
-        assetPath: String,
-        destinationFile: File
-    ) {
+    private fun copyAssetToFile(activity: Activity, assetPath: String, destinationFile: File) {
         activity.assets.open(assetPath).use { input ->
             FileOutputStream(destinationFile, false).use { output ->
                 val buffer = ByteArray(BUFFER_SIZE)

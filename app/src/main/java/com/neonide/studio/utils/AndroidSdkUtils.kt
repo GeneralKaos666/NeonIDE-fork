@@ -9,7 +9,7 @@ object AndroidSdkUtils {
     data class SdkConfig(
         val sdkDir: File,
         val env: Map<String, String>,
-        val aapt2Path: String? = null,
+        val aapt2Path: String? = null
     )
 
     /**
@@ -33,7 +33,7 @@ object AndroidSdkUtils {
         val candidates = listOf(
             File(home, "android-sdk"),
             File(home, "Android/Sdk"),
-            File("/sdcard/Android/Sdk"),
+            File("/sdcard/Android/Sdk")
         )
 
         return candidates.firstOrNull { it.exists() && it.isDirectory }
@@ -88,7 +88,9 @@ object AndroidSdkUtils {
 
             for (v in versions) {
                 val aapt2 = File(v, "aapt2")
-                if (aapt2.exists() && aapt2.isFile && ElfInspector.isAndroidRunnable(aapt2, supported)) {
+                if (aapt2.exists() && aapt2.isFile &&
+                    ElfInspector.isAndroidRunnable(aapt2, supported)
+                ) {
                     result = aapt2
                     break
                 }
@@ -106,7 +108,8 @@ object AndroidSdkUtils {
     fun resolveNdkDir(sdkDir: File): File? {
         val ndkRoot = File(sdkDir, "ndk")
         if (ndkRoot.exists() && ndkRoot.isDirectory) {
-            val versions = ndkRoot.listFiles()?.filter { it.isDirectory }?.sortedBy { it.name } ?: emptyList()
+            val versions =
+                ndkRoot.listFiles()?.filter { it.isDirectory }?.sortedBy { it.name } ?: emptyList()
             if (versions.isNotEmpty()) return versions.last()
         }
 
@@ -138,7 +141,9 @@ object AndroidSdkUtils {
         // If already patched, do nothing.
         if (ndkBuild.exists()) {
             val current = runCatching { ndkBuild.readText() }.getOrNull()
-            if (current != null && current.contains(termuxBash) && current.contains("build/ndk-build")) {
+            if (current != null && current.contains(termuxBash) &&
+                current.contains("build/ndk-build")
+            ) {
                 runCatching { ndkBuild.setExecutable(true) }
                 return
             }
@@ -171,7 +176,9 @@ object AndroidSdkUtils {
         addIfExists(File(sdkDir, "platform-tools"))
         // build-tools/<highest>
         val buildToolsDir = File(sdkDir, "build-tools")
-        val buildTools = buildToolsDir.listFiles()?.filter { it.isDirectory }?.sortedBy { it.name } ?: emptyList()
+        val buildTools =
+            buildToolsDir.listFiles()?.filter { it.isDirectory }?.sortedBy { it.name }
+                ?: emptyList()
         if (buildTools.isNotEmpty()) addIfExists(buildTools.last())
 
         // Keep whatever TermuxShellEnvironment provided as well.
@@ -184,10 +191,7 @@ object AndroidSdkUtils {
     /**
      * Convenience: detect SDK (+ optional NDK), update local.properties, patch ndk-build, and return env overrides.
      */
-    fun configureForProject(
-        projectDir: File,
-        baseEnv: Map<String, String>,
-    ): SdkConfig? {
+    fun configureForProject(projectDir: File, baseEnv: Map<String, String>): SdkConfig? {
         val sdkDir = resolveSdkDir(baseEnv) ?: return null
 
         ensureSdkDir(projectDir, sdkDir)
@@ -200,7 +204,7 @@ object AndroidSdkUtils {
 
         // Patch aapt2 override in gradle.properties if a compatible build-tools aapt2 is found.
         val aapt2 = resolveBestBionicAapt2(sdkDir)
-        
+
         val env = buildEnvOverrides(baseEnv, sdkDir)
         return SdkConfig(sdkDir = sdkDir, env = env, aapt2Path = aapt2?.absolutePath)
     }

@@ -16,10 +16,15 @@ class EditorSearchController(
 ) {
 
     private var searchOptions: EditorSearcher.SearchOptions =
-        EditorSearcher.SearchOptions(EditorSearcher.SearchOptions.TYPE_NORMAL, true, RegexBackrefGrammar.DEFAULT)
+        EditorSearcher.SearchOptions(
+            EditorSearcher.SearchOptions.TYPE_NORMAL,
+            true,
+            RegexBackrefGrammar.DEFAULT
+        )
 
     fun updateSearchOptions(type: Int, caseInsensitive: Boolean) {
-        searchOptions = EditorSearcher.SearchOptions(type, caseInsensitive, RegexBackrefGrammar.DEFAULT)
+        searchOptions =
+            EditorSearcher.SearchOptions(type, caseInsensitive, RegexBackrefGrammar.DEFAULT)
         tryCommitSearch()
     }
 

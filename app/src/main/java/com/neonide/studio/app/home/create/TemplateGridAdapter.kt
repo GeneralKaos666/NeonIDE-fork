@@ -7,14 +7,13 @@ import com.neonide.studio.databinding.ItemProjectTemplateBinding
 
 class TemplateGridAdapter(
     private val templates: List<ProjectTemplate>,
-    private val onClick: (ProjectTemplate) -> Unit,
+    private val onClick: (ProjectTemplate) -> Unit
 ) : RecyclerView.Adapter<TemplateGridAdapter.VH>() {
 
     class VH(val binding: ItemProjectTemplateBinding) : RecyclerView.ViewHolder(binding.root)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        return VH(ItemProjectTemplateBinding.inflate(LayoutInflater.from(parent.context), parent, false))
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
+        VH(ItemProjectTemplateBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
     override fun getItemCount(): Int = templates.size
 

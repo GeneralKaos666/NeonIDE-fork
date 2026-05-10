@@ -4,13 +4,13 @@ import android.net.LocalSocket
 import android.net.LocalSocketAddress
 import android.util.Log
 import com.neonide.studio.app.lsp.server.JavaLanguageServerService
+import java.io.IOException
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.eclipse.lsp4j.services.LanguageServer
-import java.io.IOException
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
 
 class LspManager {
 
@@ -50,11 +50,15 @@ class LspManager {
             try {
                 statusListener?.invoke(LspStatus.Connecting)
                 val socket = LocalSocket()
-                val address = LocalSocketAddress(JavaLanguageServerService.SOCKET_NAME, LocalSocketAddress.Namespace.ABSTRACT)
-                
+                val address =
+                    LocalSocketAddress(
+                        JavaLanguageServerService.SOCKET_NAME,
+                        LocalSocketAddress.Namespace.ABSTRACT
+                    )
+
                 var connected = false
                 val deadline = System.currentTimeMillis() + 5000 // 5 second timeout
-                
+
                 while (System.currentTimeMillis() < deadline) {
                     try {
                         socket.connect(address)
@@ -122,14 +126,23 @@ class LspManager {
 
     fun getServer(): LanguageServer? = server
 
-    fun requestCompletion(uri: String, line: Int, character: Int): CompletableFuture<org.eclipse.lsp4j.jsonrpc.messages.Either<List<org.eclipse.lsp4j.CompletionItem>, org.eclipse.lsp4j.CompletionList>>? {
+    fun requestCompletion(
+        uri: String,
+        line: Int,
+        character: Int
+    ): CompletableFuture<org.eclipse.lsp4j.jsonrpc.messages.Either<List<org.eclipse.lsp4j.CompletionItem>, org.eclipse.lsp4j.CompletionList>>? {
         val params = org.eclipse.lsp4j.CompletionParams()
         params.textDocument = org.eclipse.lsp4j.TextDocumentIdentifier(uri)
         params.position = org.eclipse.lsp4j.Position(line, character)
         return server?.textDocumentService?.completion(params)
     }
 
-    fun fetchCompletionItems(uri: String, line: Int, character: Int, prefixLength: Int): CompletableFuture<List<LspCompletionItem>> {
+    fun fetchCompletionItems(
+        uri: String,
+        line: Int,
+        character: Int,
+        prefixLength: Int
+    ): CompletableFuture<List<LspCompletionItem>> {
         val future = CompletableFuture<List<LspCompletionItem>>()
         requestCompletion(uri, line, character)?.thenAccept { result ->
             val items = if (result.isLeft) {
@@ -143,21 +156,29 @@ class LspManager {
         return future
     }
 
-    fun requestDefinition(uri: String, line: Int, character: Int): CompletableFuture<org.eclipse.lsp4j.jsonrpc.messages.Either<List<org.eclipse.lsp4j.Location>, List<org.eclipse.lsp4j.LocationLink>>>? {
+    fun requestDefinition(
+        uri: String,
+        line: Int,
+        character: Int
+    ): CompletableFuture<org.eclipse.lsp4j.jsonrpc.messages.Either<List<org.eclipse.lsp4j.Location>, List<org.eclipse.lsp4j.LocationLink>>>? {
         val params = org.eclipse.lsp4j.DefinitionParams()
         params.textDocument = org.eclipse.lsp4j.TextDocumentIdentifier(uri)
         params.position = org.eclipse.lsp4j.Position(line, character)
         return server?.textDocumentService?.definition(params)
     }
 
-    fun requestReferences(uri: String, line: Int, character: Int): CompletableFuture<List<org.eclipse.lsp4j.Location>>? {
+    fun requestReferences(
+        uri: String,
+        line: Int,
+        character: Int
+    ): CompletableFuture<List<org.eclipse.lsp4j.Location>>? {
         val params = org.eclipse.lsp4j.ReferenceParams()
         params.textDocument = org.eclipse.lsp4j.TextDocumentIdentifier(uri)
         params.position = org.eclipse.lsp4j.Position(line, character)
         params.context = org.eclipse.lsp4j.ReferenceContext(true)
         return server?.textDocumentService?.references(params)
     }
-    
+
     fun shutdown() {
         server?.shutdown()
         server?.exit()

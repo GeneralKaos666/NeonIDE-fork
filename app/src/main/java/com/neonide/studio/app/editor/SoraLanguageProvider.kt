@@ -2,16 +2,18 @@ package com.neonide.studio.app.editor
 
 import android.content.Context
 import com.itsaky.androidide.treesitter.TreeSitter
-import com.itsaky.androidide.treesitter.java.TSLanguageJava
-import com.itsaky.androidide.treesitter.kotlin.TSLanguageKotlin
-import com.itsaky.androidide.treesitter.xml.TSLanguageXml
-import com.itsaky.androidide.treesitter.json.TSLanguageJson
-import com.itsaky.androidide.treesitter.python.TSLanguagePython
+import com.itsaky.androidide.treesitter.aidl.TSLanguageAidl
 import com.itsaky.androidide.treesitter.c.TSLanguageC
 import com.itsaky.androidide.treesitter.cpp.TSLanguageCpp
-import com.itsaky.androidide.treesitter.properties.TSLanguageProperties
+import com.itsaky.androidide.treesitter.java.TSLanguageJava
+import com.itsaky.androidide.treesitter.json.TSLanguageJson
+import com.itsaky.androidide.treesitter.kotlin.TSLanguageKotlin
 import com.itsaky.androidide.treesitter.log.TSLanguageLog
-import com.itsaky.androidide.treesitter.aidl.TSLanguageAidl
+import com.itsaky.androidide.treesitter.properties.TSLanguageProperties
+import com.itsaky.androidide.treesitter.python.TSLanguagePython
+import com.itsaky.androidide.treesitter.xml.TSLanguageXml
+import com.neonide.studio.app.editor.completion.UnifiedCompletionProvider
+import com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer
 import io.github.rosemoe.sora.editor.ts.LocalsCaptureSpec
 import io.github.rosemoe.sora.editor.ts.TsLanguage
 import io.github.rosemoe.sora.editor.ts.TsLanguageSpec
@@ -20,8 +22,6 @@ import io.github.rosemoe.sora.lang.Language
 import io.github.rosemoe.sora.lang.styling.TextStyle
 import io.github.rosemoe.sora.langs.textmate.TextMateLanguage
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
-import com.neonide.studio.app.editor.completion.UnifiedCompletionProvider
-import com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer
 import java.io.File
 
 class SoraLanguageProvider(private val context: Context) {
@@ -45,42 +45,45 @@ class SoraLanguageProvider(private val context: Context) {
         return UnifiedCompletionProvider(enhanced, file)
     }
 
-    private fun createTreeSitterLanguage(type: String): Language? {
-        return runCatching {
-            when (type) {
-                "java" -> createJavaTreeSitterLanguage()
-                "kotlin" -> createKotlinTreeSitterLanguage()
-                "xml" -> createXmlTreeSitterLanguage()
-                "json" -> createJsonTreeSitterLanguage()
-                "python" -> createPythonTreeSitterLanguage()
-                "c" -> createCTreeSitterLanguage()
-                "cpp" -> createCppTreeSitterLanguage()
-                "properties" -> createPropertiesTreeSitterLanguage()
-                "log" -> createLogTreeSitterLanguage()
-                "aidl" -> createAidlTreeSitterLanguage()
-                else -> null
-            }
-        }.getOrNull()
-    }
+    private fun createTreeSitterLanguage(type: String): Language? = runCatching {
+        when (type) {
+            "java" -> createJavaTreeSitterLanguage()
+            "kotlin" -> createKotlinTreeSitterLanguage()
+            "xml" -> createXmlTreeSitterLanguage()
+            "json" -> createJsonTreeSitterLanguage()
+            "python" -> createPythonTreeSitterLanguage()
+            "c" -> createCTreeSitterLanguage()
+            "cpp" -> createCppTreeSitterLanguage()
+            "properties" -> createPropertiesTreeSitterLanguage()
+            "log" -> createLogTreeSitterLanguage()
+            "aidl" -> createAidlTreeSitterLanguage()
+            else -> null
+        }
+    }.getOrNull()
 
-    private fun createTextMateLanguage(type: String): Language? {
-        return runCatching {
-            when (type) {
-                "java" -> TextMateLanguage.create("source.java", true)
-                "kotlin" -> TextMateLanguage.create("source.kotlin", true)
-                "python" -> TextMateLanguage.create("source.python", true)
-                "html" -> TextMateLanguage.create("text.html.basic", true)
-                "javascript" -> TextMateLanguage.create("source.js", true)
-                "markdown" -> TextMateLanguage.create("text.html.markdown", true)
-                // Provided for completeness; our bundled textmate pack currently doesn't include TS grammar,
-                // but users may load it via "TM Language from file".
-                "typescript" -> TextMateLanguage.create("source.typescript", true)
+    private fun createTextMateLanguage(type: String): Language? = runCatching {
+        when (type) {
+            "java" -> TextMateLanguage.create("source.java", true)
 
-                "xml" -> TextMateLanguage.create("text.xml", true)
-                else -> null
-            }
-        }.getOrNull()
-    }
+            "kotlin" -> TextMateLanguage.create("source.kotlin", true)
+
+            "python" -> TextMateLanguage.create("source.python", true)
+
+            "html" -> TextMateLanguage.create("text.html.basic", true)
+
+            "javascript" -> TextMateLanguage.create("source.js", true)
+
+            "markdown" -> TextMateLanguage.create("text.html.markdown", true)
+
+            // Provided for completeness; our bundled textmate pack currently doesn't include TS grammar,
+            // but users may load it via "TM Language from file".
+            "typescript" -> TextMateLanguage.create("source.typescript", true)
+
+            "xml" -> TextMateLanguage.create("text.xml", true)
+
+            else -> null
+        }
+    }.getOrNull()
 
     private fun createJavaTreeSitterLanguage(): TsLanguage {
         ensureTreeSitterLoaded()
@@ -109,30 +112,32 @@ class SoraLanguageProvider(private val context: Context) {
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
             localsScmSource = locals,
-            localsCaptureSpec = javaLocalsCaptureSpec,
+            localsCaptureSpec = javaLocalsCaptureSpec
         )
 
         return TsLanguage(spec, tab = true) {
             TextStyle.makeStyle(EditorColorScheme.KEYWORD) applyTo "keyword"
-            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo arrayOf("type", "type.builtin", "qualified_name")
+            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo
+                arrayOf("type", "type.builtin", "qualified_name")
             TextStyle.makeStyle(EditorColorScheme.KEYWORD) applyTo arrayOf("imported_member")
             TextStyle.makeStyle(EditorColorScheme.FUNCTION_NAME) applyTo arrayOf(
                 "function",
                 "function.method",
-                "function.builtin",
+                "function.builtin"
             )
             TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo arrayOf(
                 "variable",
                 "variable.builtin",
-                "variable.field",
+                "variable.field"
             )
             TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo arrayOf(
                 "string",
                 "number",
                 "constant",
-                "constant.builtin",
+                "constant.builtin"
             )
-            TextStyle.makeStyle(EditorColorScheme.ANNOTATION) applyTo arrayOf("attribute", "annotation")
+            TextStyle.makeStyle(EditorColorScheme.ANNOTATION) applyTo
+                arrayOf("attribute", "annotation")
             TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo "operator"
             TextStyle.makeStyle(EditorColorScheme.COMMENT) applyTo "comment"
             TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo ""
@@ -152,16 +157,17 @@ class SoraLanguageProvider(private val context: Context) {
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
-            localsScmSource = locals,
+            localsScmSource = locals
         )
 
         return TsLanguage(spec, tab = true) {
             TextStyle.makeStyle(EditorColorScheme.KEYWORD) applyTo "keyword"
-            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo arrayOf("type", "type.builtin", "constructor")
+            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo
+                arrayOf("type", "type.builtin", "constructor")
             TextStyle.makeStyle(EditorColorScheme.FUNCTION_NAME) applyTo arrayOf(
                 "function.invocation",
                 "function.declaration",
-                "function.builtin",
+                "function.builtin"
             )
             TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo arrayOf(
                 "identifier",
@@ -170,9 +176,10 @@ class SoraLanguageProvider(private val context: Context) {
                 "property.class",
                 "variable.builtin",
                 "parameter",
-                "constant",
+                "constant"
             )
-            TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo arrayOf("operator", "punctuation.special")
+            TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo
+                arrayOf("operator", "punctuation.special")
             TextStyle.makeStyle(EditorColorScheme.COMMENT) applyTo "comment"
             TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo arrayOf("string", "number")
             TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo ""
@@ -191,16 +198,18 @@ class SoraLanguageProvider(private val context: Context) {
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
-            localsScmSource = "",
+            localsScmSource = ""
         )
 
         return TsLanguage(spec, tab = true) {
             TextStyle.makeStyle(EditorColorScheme.HTML_TAG) applyTo arrayOf("element.tag")
-            TextStyle.makeStyle(EditorColorScheme.ATTRIBUTE_NAME) applyTo arrayOf("attr.name", "attr.prefix", "xmlns.prefix", "ns_declarator", "xml_decl")
+            TextStyle.makeStyle(EditorColorScheme.ATTRIBUTE_NAME) applyTo
+                arrayOf("attr.name", "attr.prefix", "xmlns.prefix", "ns_declarator", "xml_decl")
             TextStyle.makeStyle(EditorColorScheme.ATTRIBUTE_VALUE) applyTo arrayOf("attr.value")
             TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo "operator"
             TextStyle.makeStyle(EditorColorScheme.COMMENT) applyTo "comment"
-            TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo arrayOf("text", "xml.ref", "cdata.start", "cdata.end", "cdata.data")
+            TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo
+                arrayOf("text", "xml.ref", "cdata.start", "cdata.end", "cdata.data")
             TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo ""
         }
     }
@@ -220,11 +229,12 @@ class SoraLanguageProvider(private val context: Context) {
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
-            localsScmSource = locals,
+            localsScmSource = locals
         )
 
         return TsLanguage(spec, tab = true) {
-            TextStyle.makeStyle(EditorColorScheme.ATTRIBUTE_NAME) applyTo arrayOf("string.special.key")
+            TextStyle.makeStyle(EditorColorScheme.ATTRIBUTE_NAME) applyTo
+                arrayOf("string.special.key")
             TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo arrayOf("string", "number")
             TextStyle.makeStyle(EditorColorScheme.KEYWORD) applyTo arrayOf("constant.builtin")
             TextStyle.makeStyle(EditorColorScheme.COMMENT) applyTo "comment"
@@ -247,19 +257,24 @@ class SoraLanguageProvider(private val context: Context) {
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
-            localsScmSource = locals,
+            localsScmSource = locals
         )
 
         return TsLanguage(spec, tab = true) {
             TextStyle.makeStyle(EditorColorScheme.KEYWORD) applyTo arrayOf("keyword")
-            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo arrayOf("variable", "property", "constant")
-            TextStyle.makeStyle(EditorColorScheme.FUNCTION_NAME) applyTo arrayOf("function", "function.method", "function.builtin")
-            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo arrayOf("type", "type.builtin", "constructor")
+            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo
+                arrayOf("variable", "property", "constant")
+            TextStyle.makeStyle(EditorColorScheme.FUNCTION_NAME) applyTo
+                arrayOf("function", "function.method", "function.builtin")
+            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo
+                arrayOf("type", "type.builtin", "constructor")
             TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo arrayOf("constructor")
             TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo arrayOf("property")
-            TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo arrayOf("string", "number", "constant.builtin")
+            TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo
+                arrayOf("string", "number", "constant.builtin")
             TextStyle.makeStyle(EditorColorScheme.COMMENT) applyTo "comment"
-            TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo arrayOf("operator", "punctuation.special", "escape")
+            TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo
+                arrayOf("operator", "punctuation.special", "escape")
             TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo arrayOf("embedded")
             TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo ""
         }
@@ -279,14 +294,18 @@ class SoraLanguageProvider(private val context: Context) {
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
-            localsScmSource = locals,
+            localsScmSource = locals
         )
 
         return TsLanguage(spec, tab = true) {
-            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo arrayOf("variable", "property", "label")
-            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo arrayOf("type", "type.builtin")
-            TextStyle.makeStyle(EditorColorScheme.FUNCTION_NAME) applyTo arrayOf("function", "function.special")
-            TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo arrayOf("string", "number", "constant")
+            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo
+                arrayOf("variable", "property", "label")
+            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo
+                arrayOf("type", "type.builtin")
+            TextStyle.makeStyle(EditorColorScheme.FUNCTION_NAME) applyTo
+                arrayOf("function", "function.special")
+            TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo
+                arrayOf("string", "number", "constant")
             TextStyle.makeStyle(EditorColorScheme.KEYWORD) applyTo arrayOf("keyword")
             TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo arrayOf("operator", "delimiter")
             TextStyle.makeStyle(EditorColorScheme.COMMENT) applyTo "comment"
@@ -308,13 +327,14 @@ class SoraLanguageProvider(private val context: Context) {
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
-            localsScmSource = locals,
+            localsScmSource = locals
         )
 
         return TsLanguage(spec, tab = true) {
             TextStyle.makeStyle(EditorColorScheme.FUNCTION_NAME) applyTo arrayOf("function")
             TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo arrayOf("type")
-            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo arrayOf("variable.builtin")
+            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo
+                arrayOf("variable.builtin")
             TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo arrayOf("string", "constant")
             TextStyle.makeStyle(EditorColorScheme.KEYWORD) applyTo arrayOf("keyword")
             TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo ""
@@ -336,13 +356,15 @@ class SoraLanguageProvider(private val context: Context) {
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
-            localsScmSource = locals,
+            localsScmSource = locals
         )
 
         return TsLanguage(spec, tab = true) {
             TextStyle.makeStyle(EditorColorScheme.ATTRIBUTE_NAME) applyTo arrayOf("prop.key")
-            TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo arrayOf("prop.separator", "prop.escape")
-            TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo arrayOf("prop.value", "prop.value.continuation")
+            TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo
+                arrayOf("prop.separator", "prop.escape")
+            TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo
+                arrayOf("prop.value", "prop.value.continuation")
             TextStyle.makeStyle(EditorColorScheme.COMMENT) applyTo "comment"
             TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo ""
         }
@@ -363,7 +385,7 @@ class SoraLanguageProvider(private val context: Context) {
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
-            localsScmSource = locals,
+            localsScmSource = locals
         )
 
         return TsLanguage(spec, tab = true) {
@@ -373,7 +395,7 @@ class SoraLanguageProvider(private val context: Context) {
                 "warn.date", "warn.time", "warn.pid", "warn.tid", "warn.priority", "warn.tag", "warn.msg",
                 "info.date", "info.time", "info.pid", "info.tid", "info.priority", "info.tag", "info.msg",
                 "debug.date", "debug.time", "debug.pid", "debug.tid", "debug.priority", "debug.tag", "debug.msg",
-                "verbose.date", "verbose.time", "verbose.pid", "verbose.tid", "verbose.priority", "verbose.tag", "verbose.msg",
+                "verbose.date", "verbose.time", "verbose.pid", "verbose.tid", "verbose.priority", "verbose.tag", "verbose.msg"
             )
             TextStyle.makeStyle(EditorColorScheme.KEYWORD) applyTo arrayOf("header")
             TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo ""
@@ -393,25 +415,29 @@ class SoraLanguageProvider(private val context: Context) {
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks.takeIf { it.isNotBlank() } ?: " ",
             bracketsScmSource = brackets.takeIf { it.isNotBlank() } ?: " ",
-            localsScmSource = locals,
+            localsScmSource = locals
         )
 
         return TsLanguage(spec, tab = true) {
             TextStyle.makeStyle(EditorColorScheme.KEYWORD) applyTo arrayOf("keyword")
-            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo arrayOf("type", "type.builtin")
+            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_NAME) applyTo
+                arrayOf("type", "type.builtin")
             TextStyle.makeStyle(EditorColorScheme.FUNCTION_NAME) applyTo arrayOf("function.method")
-            TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo arrayOf("string", "number", "constant.builtin")
+            TextStyle.makeStyle(EditorColorScheme.LITERAL) applyTo
+                arrayOf("string", "number", "constant.builtin")
             TextStyle.makeStyle(EditorColorScheme.COMMENT) applyTo arrayOf("comment")
             TextStyle.makeStyle(EditorColorScheme.ANNOTATION) applyTo arrayOf("attribute")
             TextStyle.makeStyle(EditorColorScheme.OPERATOR) applyTo arrayOf("operator")
-            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo arrayOf("variable", "constant")
+            TextStyle.makeStyle(EditorColorScheme.IDENTIFIER_VAR) applyTo
+                arrayOf("variable", "constant")
             TextStyle.makeStyle(EditorColorScheme.TEXT_NORMAL) applyTo ""
         }
     }
 
-    private fun readAssetText(path: String): String {
-        return context.assets.open(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
-    }
+    private fun readAssetText(path: String): String =
+        context.assets.open(path).bufferedReader(Charsets.UTF_8).use {
+            it.readText()
+        }
 
     private fun ensureTreeSitterLoaded() {
         if (treeSitterLoaded) return

@@ -5,9 +5,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class SimpleStringAdapter(
-    private var items: List<String> = emptyList(),
-) : RecyclerView.Adapter<SimpleStringAdapter.VH>() {
+class SimpleStringAdapter(private var items: List<String> = emptyList()) :
+    RecyclerView.Adapter<SimpleStringAdapter.VH>() {
 
     class VH(val tv: TextView) : RecyclerView.ViewHolder(tv)
 

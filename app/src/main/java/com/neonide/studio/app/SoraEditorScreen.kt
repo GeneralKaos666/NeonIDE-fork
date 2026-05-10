@@ -2,15 +2,15 @@ package com.neonide.studio.app
 
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -20,7 +20,6 @@ import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.SymbolInputView
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SoraEditorScreen(
     editor: CodeEditor,
@@ -51,15 +50,17 @@ fun SoraEditorScreen(
             if (editorVm.searchPanelVisible) {
                 EditorSearchPanel(editorVm, searchController)
             }
-            
+
             Box(modifier = Modifier.weight(1f)) {
                 AndroidView(
-                    factory = { editor.apply { 
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                    } },
+                    factory = {
+                        editor.apply {
+                            layoutParams = ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -70,10 +71,7 @@ fun SoraEditorScreen(
 }
 
 @Composable
-fun EditorSearchPanel(
-    viewModel: EditorViewModel,
-    controller: EditorSearchController
-) {
+fun EditorSearchPanel(viewModel: EditorViewModel, controller: EditorSearchController) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -90,7 +88,7 @@ fun EditorSearchPanel(
                 Icon(Icons.Default.ArrowForward, contentDescription = "Next")
             }
             IconButton(onClick = { controller.replaceCurrent() }, modifier = Modifier.weight(1f)) {
-                Icon(Icons.Default.Refresh, contentDescription = "Replace") 
+                Icon(Icons.Default.Refresh, contentDescription = "Replace")
             }
             IconButton(onClick = { controller.replaceAll() }, modifier = Modifier.weight(1f)) {
                 Text("ALL")
@@ -99,10 +97,10 @@ fun EditorSearchPanel(
                 Icon(Icons.Default.MoreVert, contentDescription = "Options")
             }
         }
-        
+
         OutlinedTextField(
             value = viewModel.searchQuery,
-            onValueChange = { 
+            onValueChange = {
                 viewModel.searchQuery = it
                 controller.tryCommitSearch()
             },
@@ -110,7 +108,7 @@ fun EditorSearchPanel(
             label = { Text(stringResource(R.string.sora_text_to_search)) },
             singleLine = true
         )
-        
+
         OutlinedTextField(
             value = viewModel.replacementText,
             onValueChange = { viewModel.replacementText = it },

@@ -31,63 +31,75 @@ object GradleProjectActions {
             WrapperStatus.MissingScriptOrProps
         } else {
             runCatching { gradlew.setExecutable(true) }
-            if (wrapperJar.exists()) WrapperStatus.Ok else repairWrapper(context, wrapperJar, wrapperProps)
+            if (wrapperJar.exists()) {
+                WrapperStatus.Ok
+            } else {
+                repairWrapper(
+                    context,
+                    wrapperJar,
+                    wrapperProps
+                )
+            }
         }
         return status
     }
 
-    private fun repairWrapper(context: Context, wrapperJar: File, wrapperProps: File): WrapperStatus {
-        return runCatching {
-            wrapperJar.parentFile?.mkdirs()
-            val jarAsset = findAsset(
+    private fun repairWrapper(
+        context: Context,
+        wrapperJar: File,
+        wrapperProps: File
+    ): WrapperStatus = runCatching {
+        wrapperJar.parentFile?.mkdirs()
+        val jarAsset = findAsset(
+            context,
+            listOf("gradle/wrapper/gradle-wrapper.jar", "gradle-wrapper/gradle-wrapper.jar"),
+            "gradle-wrapper/gradle-wrapper.jar"
+        )
+
+        context.assets.open(jarAsset).use { input ->
+            wrapperJar.outputStream().use { out -> input.copyTo(out) }
+        }
+
+        if (!wrapperProps.exists()) {
+            wrapperProps.parentFile?.mkdirs()
+            val propsAsset = findAsset(
                 context,
-                listOf("gradle/wrapper/gradle-wrapper.jar", "gradle-wrapper/gradle-wrapper.jar"),
-                "gradle-wrapper/gradle-wrapper.jar"
-            )
-            
-            context.assets.open(jarAsset).use { input ->
-                wrapperJar.outputStream().use { out -> input.copyTo(out) }
-            }
-
-            if (!wrapperProps.exists()) {
-                wrapperProps.parentFile?.mkdirs()
-                val propsAsset = findAsset(
-                    context,
-                    listOf("gradle/wrapper/gradle-wrapper.properties", "gradle-wrapper/gradle-wrapper.properties"),
+                listOf(
+                    "gradle/wrapper/gradle-wrapper.properties",
                     "gradle-wrapper/gradle-wrapper.properties"
-                )
-                context.assets.open(propsAsset).use { input ->
-                    wrapperProps.outputStream().use { out -> input.copyTo(out) }
-                }
+                ),
+                "gradle-wrapper/gradle-wrapper.properties"
+            )
+            context.assets.open(propsAsset).use { input ->
+                wrapperProps.outputStream().use { out -> input.copyTo(out) }
             }
-            WrapperStatus.Repaired
-        }.getOrElse { WrapperStatus.RepairFailed }
-    }
+        }
+        WrapperStatus.Repaired
+    }.getOrElse { WrapperStatus.RepairFailed }
 
-    private fun findAsset(context: Context, paths: List<String>, fallback: String): String {
-        return paths.firstOrNull { p ->
-            runCatching { context.assets.open(p).close(); true }.getOrDefault(false)
+    private fun findAsset(context: Context, paths: List<String>, fallback: String): String =
+        paths.firstOrNull { p ->
+            runCatching {
+                context.assets.open(p).close()
+                true
+            }.getOrDefault(false)
         } ?: fallback
-    }
 
     enum class WrapperStatus {
         Ok,
         Repaired,
         MissingScriptOrProps,
-        RepairFailed,
+        RepairFailed
     }
 
     /** A structured sync plan. */
-    data class SyncPlan(
-        val args: List<String>,
-        val description: String,
-    )
+    data class SyncPlan(val args: List<String>, val description: String)
 
     /** A structured build/run plan. */
     data class QuickRunPlan(
         val args: List<String>,
         val description: String,
-        val expectedApkSearchDir: File?,
+        val expectedApkSearchDir: File?
     )
 
     /**
@@ -121,7 +133,7 @@ object GradleProjectActions {
         return QuickRunPlan(
             args = args,
             description = "Assemble debug",
-            expectedApkSearchDir = apkSearchDir,
+            expectedApkSearchDir = apkSearchDir
         )
     }
 
@@ -132,7 +144,7 @@ object GradleProjectActions {
         val args = mutableListOf(
             "--no-daemon",
             "--stacktrace",
-            "--console=plain",
+            "--console=plain"
         )
         if (aapt2Path != null) {
             args.add("-Pandroid.aapt2FromMavenOverride=$aapt2Path")
@@ -145,16 +157,20 @@ object GradleProjectActions {
      *
      * Uses TermuxShellEnvironment so binaries, TMPDIR etc match the Termux runtime.
      */
-    fun getGradleEnvironment(context: Context): Map<String, String> {
-        return TermuxShellEnvironment().getEnvironment(context, false)
-    }
+    fun getGradleEnvironment(context: Context): Map<String, String> =
+        TermuxShellEnvironment().getEnvironment(context, false)
 
-    fun wrapperStatusMessage(context: Context, status: WrapperStatus): String? {
-        return when (status) {
-            WrapperStatus.Ok -> null
-            WrapperStatus.Repaired -> context.getString(R.string.acs_gradle_wrapper_repaired)
-            WrapperStatus.MissingScriptOrProps -> context.getString(R.string.acs_gradle_wrapper_missing)
-            WrapperStatus.RepairFailed -> context.getString(R.string.acs_gradle_wrapper_repair_failed)
-        }
+    fun wrapperStatusMessage(context: Context, status: WrapperStatus): String? = when (status) {
+        WrapperStatus.Ok -> null
+
+        WrapperStatus.Repaired -> context.getString(R.string.acs_gradle_wrapper_repaired)
+
+        WrapperStatus.MissingScriptOrProps -> context.getString(
+            R.string.acs_gradle_wrapper_missing
+        )
+
+        WrapperStatus.RepairFailed -> context.getString(
+            R.string.acs_gradle_wrapper_repair_failed
+        )
     }
 }

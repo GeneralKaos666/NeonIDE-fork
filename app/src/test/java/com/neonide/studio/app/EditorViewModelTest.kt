@@ -21,9 +21,17 @@ class EditorViewModelTest {
     fun testConnectionStatusUpdates() {
         val viewModel = EditorViewModel()
         assertNotNull("Connection status should be initialized", viewModel.connectionStatus.value)
-        assertEquals("Initial status should be Disconnected", LspStatus.Disconnected, viewModel.connectionStatus.value)
-        
+        assertEquals(
+            "Initial status should be Disconnected",
+            LspStatus.Disconnected,
+            viewModel.connectionStatus.value
+        )
+
         viewModel.setLspStatus(LspStatus.Connecting)
-        assertEquals("Status should be Connecting", LspStatus.Connecting, viewModel.connectionStatus.value)
+        assertEquals(
+            "Status should be Connecting",
+            LspStatus.Connecting,
+            viewModel.connectionStatus.value
+        )
     }
 }

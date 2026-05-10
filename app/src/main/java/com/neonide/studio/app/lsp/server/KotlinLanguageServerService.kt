@@ -24,9 +24,7 @@ class KotlinLanguageServerService : Service() {
         const val SOCKET_NAME = "kotlin-lang-server"
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Starting Kotlin Language Server Service...")
@@ -73,7 +71,8 @@ class KotlinLanguageServerService : Service() {
                     processBuilder.directory(serverDir)
                     val environment = processBuilder.environment()
                     environment["HOME"] = TermuxConstants.TERMUX_HOME_DIR_PATH
-                    environment["PATH"] = "${TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH}:${environment["PATH"]}"
+                    environment["PATH"] =
+                        "${TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH}:${environment["PATH"]}"
 
                     process = processBuilder.start()
 
@@ -185,7 +184,9 @@ class KotlinLanguageServerService : Service() {
                                 zip.copyTo(out)
                             }
                             // Make scripts executable
-                            if (outFile.name.endsWith(".sh") || outFile.name == "kotlin-language-server") {
+                            if (outFile.name.endsWith(".sh") ||
+                                outFile.name == "kotlin-language-server"
+                            ) {
                                 outFile.setExecutable(true, true)
                             }
                         }

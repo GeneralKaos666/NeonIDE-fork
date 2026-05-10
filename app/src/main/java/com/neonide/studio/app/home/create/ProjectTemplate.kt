@@ -8,7 +8,7 @@ data class ProjectTemplate(
     @param:StringRes val nameRes: Int,
     @param:StringRes val descriptionRes: Int,
     @param:DrawableRes val iconRes: Int,
-    val kind: Kind,
+    val kind: Kind
 ) {
     enum class Kind {
         NO_ACTIVITY,
@@ -19,7 +19,6 @@ data class ProjectTemplate(
         BOTTOM_NAV_ACTIVITY,
         TABBED_ACTIVITY,
         NO_ANDROIDX_ACTIVITY,
-        COMPOSE_ACTIVITY,
+        COMPOSE_ACTIVITY
     }
 }
-
