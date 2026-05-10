@@ -22,10 +22,7 @@ import io.github.rosemoe.sora.widget.CodeEditor
 import kotlinx.coroutines.launch
 
 @Composable
-fun EditorBottomSheetContent(
-    viewModel: BottomSheetViewModel,
-    modifier: Modifier = Modifier
-) {
+fun EditorBottomSheetContent(viewModel: BottomSheetViewModel, modifier: Modifier = Modifier) {
     val tabs = listOf(
         R.string.acs_tab_build_output,
         R.string.acs_tab_app_logs,
@@ -59,12 +56,6 @@ fun EditorBottomSheetContent(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Surface(
-                    modifier = Modifier.size(width = 36.dp, height = 4.dp),
-                    color = Color.Gray,
-                    shape = MaterialTheme.shapes.small
-                ) {}
-                
                 status?.let {
                     Text(
                         text = it,
@@ -165,7 +156,10 @@ fun LogsPage(logs: String) {
             if (view.text.toString() != logs) {
                 view.setText(logs)
                 val content = view.text
-                view.setSelection(content.lineCount - 1, content.getColumnCount(content.lineCount - 1))
+                view.setSelection(
+                    content.lineCount - 1,
+                    content.getColumnCount(content.lineCount - 1)
+                )
             }
         },
         modifier = Modifier.fillMaxSize()

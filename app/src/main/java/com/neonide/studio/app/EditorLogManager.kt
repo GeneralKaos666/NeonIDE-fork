@@ -3,7 +3,6 @@ package com.neonide.studio.app
 import android.content.Context
 import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
 import io.github.rosemoe.sora.widget.CodeEditor
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,9 +17,9 @@ class EditorLogManager(
 
     fun refreshAppLogs(bufferSize: Int) {
         uiScope.launch(Dispatchers.IO) {
-            val lines = runCatching { 
+            val lines = runCatching {
                 ProcessBuilder("logcat", "-d", "-t", bufferSize.toString())
-                    .redirectErrorStream(true).start().inputStream.bufferedReader().readText() 
+                    .redirectErrorStream(true).start().inputStream.bufferedReader().readText()
             }.getOrDefault("")
             bottomSheetVm.setAppLogs(lines)
         }

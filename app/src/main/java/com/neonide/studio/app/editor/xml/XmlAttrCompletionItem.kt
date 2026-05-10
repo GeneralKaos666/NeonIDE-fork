@@ -14,7 +14,7 @@ class XmlAttrCompletionItem(
     label: CharSequence,
     desc: CharSequence,
     private val attrName: String,
-    private val replacePrefixLength: Int,
+    private val replacePrefixLength: Int
 ) : CompletionItem(label, desc) {
 
     init {

@@ -56,18 +56,14 @@ object SafeDirLister {
         }
     }
 
-    fun listFiles(dir: File, limit: Int = 500): List<File> {
-        return listEntries(dir, limit)
-            .map { e -> File(dir, e.name) }
-            .filter { it.exists() }
-    }
+    fun listFiles(dir: File, limit: Int = 500): List<File> = listEntries(dir, limit)
+        .map { e -> File(dir, e.name) }
+        .filter { it.exists() }
 
-    fun listDirs(dir: File, limit: Int = 500): List<File> {
-        return listEntries(dir, limit)
-            .filter { it.isDirectory }
-            .map { e -> File(dir, e.name) }
-            .filter { it.exists() && it.isDirectory }
-    }
+    fun listDirs(dir: File, limit: Int = 500): List<File> = listEntries(dir, limit)
+        .filter { it.isDirectory }
+        .map { e -> File(dir, e.name) }
+        .filter { it.exists() && it.isDirectory }
 
     data class Entry(val name: String, val isDirectory: Boolean)
 }

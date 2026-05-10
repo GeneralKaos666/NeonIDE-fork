@@ -29,8 +29,8 @@ data class GitLayoutState(
 
     // cloning state
     val isCloning: Boolean = false,
-    val progressPercent: Int = 0,       // 0..100
-    val progressText: String = "",      // "Receiving objects" etc.
-    val statusText: String = "",        // "Cloning…", "Done", "Failed: …"
-    val isCancelled: Boolean = false    // internal flag
+    val progressPercent: Int = 0, // 0..100
+    val progressText: String = "", // "Receiving objects" etc.
+    val statusText: String = "", // "Cloning…", "Done", "Failed: …"
+    val isCancelled: Boolean = false // internal flag
 )

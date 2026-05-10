@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
@@ -39,7 +38,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -48,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-
 import com.neonide.studio.app.SoraEditorActivityK
 
 @Composable
@@ -260,9 +257,11 @@ fun GitLayout(
                 Text(
                     text = state.statusText,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (state.destinationError != null)
+                    color = if (state.destinationError != null) {
                         MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
             }
 
@@ -273,8 +272,11 @@ fun GitLayout(
             ) {
                 TextButton(
                     onClick = {
-                        if (state.isCloning) viewModel.cancelClone()
-                        else onBack()
+                        if (state.isCloning) {
+                            viewModel.cancelClone()
+                        } else {
+                            onBack()
+                        }
                     }
                 ) {
                     Text(if (state.isCloning) "Stop" else "Cancel")
@@ -284,7 +286,10 @@ fun GitLayout(
                     onClick = {
                         viewModel.startClone(context) { projectDir ->
                             val intent = Intent(context, SoraEditorActivityK::class.java)
-                            intent.putExtra(SoraEditorActivityK.EXTRA_PROJECT_DIR, projectDir.absolutePath)
+                            intent.putExtra(
+                                SoraEditorActivityK.EXTRA_PROJECT_DIR,
+                                projectDir.absolutePath
+                            )
                             context.startActivity(intent)
                             onFinished()
                         }

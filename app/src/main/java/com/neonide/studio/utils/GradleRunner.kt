@@ -14,10 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 object GradleRunner {
 
-    data class Result(
-        val exitCode: Int,
-        val wasCancelled: Boolean,
-    ) {
+    data class Result(val exitCode: Int, val wasCancelled: Boolean) {
         val isSuccessful: Boolean get() = exitCode == 0 && !wasCancelled
     }
 
@@ -41,7 +38,7 @@ object GradleRunner {
         projectDir: File,
         args: List<String>,
         envOverrides: Map<String, String> = emptyMap(),
-        onOutputLine: (String) -> Unit,
+        onOutputLine: (String) -> Unit
     ): Handle {
         val gradlew = File(projectDir, "gradlew")
         if (!gradlew.exists()) {
@@ -111,10 +108,10 @@ object GradleRunner {
 
     class Handle internal constructor(
         private val process: Process,
-        private val onOutputLine: (String) -> Unit,
+        private val onOutputLine: (String) -> Unit
     ) {
         private val cancelled = AtomicBoolean(false)
-        
+
         companion object {
             private const val BUFFER_SIZE = 4096
         }

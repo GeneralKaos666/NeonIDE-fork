@@ -37,13 +37,15 @@ class EditorDialogHelper(
 
     fun chooseTypeface() {
         val fonts = arrayOf("JetBrains Mono", "Ubuntu Mono", "Google/Roboto Mono")
-        val assetsPaths = arrayOf("JetBrainsMono-Regular.ttf", "UbuntuMono-Regular.ttf", "RobotoMono-Regular.ttf")
+        val assetsPaths =
+            arrayOf("JetBrainsMono-Regular.ttf", "UbuntuMono-Regular.ttf", "RobotoMono-Regular.ttf")
         AlertDialog.Builder(activity)
             .setTitle(android.R.string.dialog_alert_title)
             .setSingleChoiceItems(fonts, -1) { dialog, which ->
                 if (which in assetsPaths.indices) {
                     runCatching {
-                        editor.typefaceText = Typeface.createFromAsset(activity.assets, assetsPaths[which])
+                        editor.typefaceText =
+                            Typeface.createFromAsset(activity.assets, assetsPaths[which])
                     }
                 }
                 dialog.dismiss()
@@ -127,10 +129,15 @@ class EditorDialogHelper(
                     else -> {
                         when (selected) {
                             "Java" -> editor.setEditorLanguage(JavaLanguage())
+
                             "Text" -> editor.setEditorLanguage(EmptyLanguage())
+
                             "TM Language from file" -> loadTMLLauncher.launch("*/*")
+
                             "Tree-sitter Java" -> {
-                                editor.setEditorLanguage(languageProvider.getLanguage(File("dummy.java")))
+                                editor.setEditorLanguage(
+                                    languageProvider.getLanguage(File("dummy.java"))
+                                )
                             }
                         }
                     }
@@ -173,10 +180,15 @@ class EditorDialogHelper(
             .setSingleChoiceItems(themes, -1) { dialog, which ->
                 when (which) {
                     0 -> editor.colorScheme = EditorColorScheme()
+
                     1 -> editor.colorScheme = SchemeGitHub()
+
                     2 -> editor.colorScheme = SchemeEclipse()
+
                     3 -> editor.colorScheme = SchemeDarcula()
+
                     4 -> editor.colorScheme = SchemeVS2019()
+
                     5 -> editor.colorScheme = SchemeNotepadXX()
 
                     6 -> {

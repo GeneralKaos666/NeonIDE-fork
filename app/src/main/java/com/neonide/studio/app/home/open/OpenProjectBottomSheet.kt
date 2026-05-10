@@ -4,10 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Environment
 import android.widget.Toast
-import androidx.documentfile.provider.DocumentFile
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -18,19 +16,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,7 +40,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,39 +56,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-
+import androidx.documentfile.provider.DocumentFile
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-
+import com.neonide.studio.EditorActivity
 import com.neonide.studio.R
 import com.neonide.studio.app.SoraEditorActivityK
 import com.neonide.studio.app.home.preferences.WizardPreferences
 import com.neonide.studio.app.utils.DisplayNameUtils
 import com.neonide.studio.app.utils.SafeDirLister
 import com.neonide.studio.app.utils.SafeFileDeleter
-import com.termux.shared.termux.TermuxConstants
 import com.neonide.studio.utils.FileUtil
-import com.neonide.studio.EditorActivity
+import com.termux.shared.termux.TermuxConstants
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun OpenProjectBottomSheet(
-    onDismiss: () -> Unit
-) {
+fun OpenProjectBottomSheet(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
     var projects by remember { mutableStateOf(emptyList<File>()) }
     var searchQuery by remember { mutableStateOf("") }
@@ -104,32 +96,43 @@ fun OpenProjectBottomSheet(
         isLoading = false
     }
 
-    val startForResult = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val uri = result.data?.data ?: return@rememberLauncherForActivityResult
-        
-        val dir = FileUtil.resolveUriToFile(uri)
+    val startForResult =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val uri = result.data?.data ?: return@rememberLauncherForActivityResult
 
-        if (dir != null) {
-            if (!dir.exists() || !dir.isDirectory) {
-                Toast.makeText(context, R.string.acs_err_invalid_picked_dir, Toast.LENGTH_SHORT).show()
-            } else {
-                scope.launch {
-                    sheetState.hide()
-                    onDismiss()
+            val dir = FileUtil.resolveUriToFile(uri)
+
+            if (dir != null) {
+                if (!dir.exists() || !dir.isDirectory) {
+                    Toast.makeText(
+                        context,
+                        R.string.acs_err_invalid_picked_dir,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    scope.launch {
+                        sheetState.hide()
+                        onDismiss()
+                    }
+                    openProject(context, dir)
                 }
-                openProject(context, dir)
+            } else {
+                Toast.makeText(
+                    context,
+                    R.string.acs_err_invalid_picked_dir,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-        } else {
-            Toast.makeText(context, R.string.acs_err_invalid_picked_dir, Toast.LENGTH_SHORT).show()
         }
-    }
 
     val filteredProjects = if (searchQuery.isBlank()) {
         projects
     } else {
         projects.filter { p ->
             p.name.contains(searchQuery, ignoreCase = true) ||
-                    p.absolutePath.contains(searchQuery, ignoreCase = true)
+                p.absolutePath.contains(searchQuery, ignoreCase = true)
         }
     }
 
@@ -154,7 +157,7 @@ fun OpenProjectBottomSheet(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 OutlinedButton(
                     onClick = { startForResult.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)) },
                     modifier = Modifier.size(48.dp),
@@ -175,11 +178,19 @@ fun OpenProjectBottomSheet(
                     .fillMaxWidth()
                     .padding(top = 12.dp),
                 placeholder = { Text(stringResource(id = R.string.search_projects_hint)) },
-                leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_search), contentDescription = null) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_search),
+                        contentDescription = null
+                    )
+                },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(painter = painterResource(id = R.drawable.ic_close_24), contentDescription = null)
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_close_24),
+                                contentDescription = null
+                            )
                         }
                     }
                 },
@@ -196,10 +207,11 @@ fun OpenProjectBottomSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (searchQuery.isEmpty()) 
+                        text = if (searchQuery.isEmpty()) {
                             stringResource(id = R.string.no_projects_found)
-                        else 
-                            stringResource(id = R.string.no_projects_match_search),
+                        } else {
+                            stringResource(id = R.string.no_projects_match_search)
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.secondary,
                         textAlign = TextAlign.Center,
@@ -227,13 +239,16 @@ fun OpenProjectBottomSheet(
                             onLongClick = {
                                 showProjectOptionsDialog(context, project) {
                                     scope.launch {
-                                        projects = withContext(Dispatchers.IO) { loadProjectsInternal(context) }
+                                        projects =
+                                            withContext(Dispatchers.IO) {
+                                                loadProjectsInternal(context)
+                                            }
                                     }
                                 }
                             }
                         )
                     }
-                    
+
                     item {
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -245,13 +260,10 @@ fun OpenProjectBottomSheet(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ProjectItem(
-    project: File,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
-) {
+private fun ProjectItem(project: File, onClick: () -> Unit, onLongClick: () -> Unit) {
     val context = LocalContext.current
-    val recentRank = remember(project) { WizardPreferences.getRecentProjectRank(context, project.absolutePath) }
+    val recentRank =
+        remember(project) { WizardPreferences.getRecentProjectRank(context, project.absolutePath) }
     val isRecent = recentRank in 0..2
 
     Card(
@@ -364,26 +376,32 @@ private fun loadProjectsInternal(context: Context): List<File> {
 private fun isValidAndroidProjectInternal(dir: File): Boolean {
     if (!dir.isDirectory) return false
     val hasRootBuild = File(dir, "build.gradle").exists() || File(dir, "build.gradle.kts").exists()
-    val hasSettings = File(dir, "settings.gradle").exists() || File(dir, "settings.gradle.kts").exists()
+    val hasSettings =
+        File(dir, "settings.gradle").exists() || File(dir, "settings.gradle.kts").exists()
     val hasGradlew = File(dir, "gradlew").exists() || File(dir, "gradlew.bat").exists()
     val hasWrapper = File(dir, "gradle/wrapper/gradle-wrapper.properties").exists()
-    val hasAppModuleBuild = File(dir, "app/build.gradle").exists() || File(dir, "app/build.gradle.kts").exists()
+    val hasAppModuleBuild =
+        File(dir, "app/build.gradle").exists() || File(dir, "app/build.gradle.kts").exists()
     return hasRootBuild || hasSettings || hasGradlew || hasWrapper || hasAppModuleBuild
 }
 
 private fun openProject(context: Context, root: File) {
     WizardPreferences.addRecentProject(context, root.absolutePath)
-    //val intent = Intent(context, SoraEditorActivityK::class.java)
+    // val intent = Intent(context, SoraEditorActivityK::class.java)
     val intent = Intent(context, EditorActivity::class.java)
     intent.putExtra(SoraEditorActivityK.EXTRA_PROJECT_DIR, root.absolutePath)
     context.startActivity(intent)
 }
 
-private fun showProjectOptionsDialog(context: Context, project: File, onActionComplete: () -> Unit) {
+private fun showProjectOptionsDialog(
+    context: Context,
+    project: File,
+    onActionComplete: () -> Unit
+) {
     val options = arrayOf(
         context.getString(R.string.backup_project),
         context.getString(R.string.delete_project_title_short),
-        context.getString(R.string.rename),
+        context.getString(R.string.rename)
     )
 
     MaterialAlertDialogBuilder(context)
@@ -402,7 +420,12 @@ private fun showProjectOptionsDialog(context: Context, project: File, onActionCo
 private fun showDeleteProjectConfirmation(context: Context, project: File, onDeleted: () -> Unit) {
     MaterialAlertDialogBuilder(context)
         .setTitle(context.getString(R.string.delete_project_title))
-        .setMessage(context.getString(R.string.delete_project_message, DisplayNameUtils.safeForUi(project.name)))
+        .setMessage(
+            context.getString(
+                R.string.delete_project_message,
+                DisplayNameUtils.safeForUi(project.name)
+            )
+        )
         .setPositiveButton(context.getString(R.string.delete)) { dialog, _ ->
             dialog.dismiss()
             deleteProject(context, project, onDeleted)
@@ -455,9 +478,11 @@ private fun showRenameDialog(context: Context, project: File, onComplete: () -> 
                 newName.isBlank() -> {
                     Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show()
                 }
+
                 newName == project.name -> {
                     dialog.dismiss()
                 }
+
                 !newName.matches(Regex("^[a-zA-Z][a-zA-Z0-9_]*$")) -> {
                     MaterialAlertDialogBuilder(context)
                         .setTitle(context.getString(R.string.invalid_name))
@@ -465,12 +490,15 @@ private fun showRenameDialog(context: Context, project: File, onComplete: () -> 
                         .setPositiveButton(android.R.string.ok, null)
                         .show()
                 }
+
                 else -> {
                     val newDir = File(project.parentFile, newName)
                     if (newDir.exists()) {
                         MaterialAlertDialogBuilder(context)
                             .setTitle(context.getString(R.string.name_already_exists))
-                            .setMessage(context.getString(R.string.project_name_exists_message, newName))
+                            .setMessage(
+                                context.getString(R.string.project_name_exists_message, newName)
+                            )
                             .setPositiveButton(android.R.string.ok, null)
                             .show()
                     } else {
@@ -485,13 +513,20 @@ private fun showRenameDialog(context: Context, project: File, onComplete: () -> 
     dialog.show()
 
     input.requestFocus()
-    val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+    val imm = context.getSystemService(
+        android.content.Context.INPUT_METHOD_SERVICE
+    ) as android.view.inputmethod.InputMethodManager
     input.postDelayed({
         imm.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
     }, 100)
 }
 
-private fun renameProject(context: Context, oldProject: File, newProject: File, onComplete: () -> Unit) {
+private fun renameProject(
+    context: Context,
+    oldProject: File,
+    newProject: File,
+    onComplete: () -> Unit
+) {
     val scope = kotlinx.coroutines.CoroutineScope(Dispatchers.IO)
     scope.launch {
         val renamed = runCatching { oldProject.renameTo(newProject) }.getOrDefault(false)
@@ -503,7 +538,10 @@ private fun renameProject(context: Context, oldProject: File, newProject: File, 
                 if (oldIndex >= 0) {
                     recentProjects.removeAt(oldIndex)
                     recentProjects.add(oldIndex, newProject.absolutePath)
-                    context.getSharedPreferences("atc_wizard_prefs", android.content.Context.MODE_PRIVATE)
+                    context.getSharedPreferences(
+                        "atc_wizard_prefs",
+                        android.content.Context.MODE_PRIVATE
+                    )
                         .edit()
                         .putString("recent_projects", recentProjects.joinToString(","))
                         .apply()
@@ -543,7 +581,9 @@ private fun backupProject(context: Context, project: File, onComplete: () -> Uni
 
     val scope = kotlinx.coroutines.CoroutineScope(Dispatchers.IO)
     scope.launch {
-        val backupDir = File(TermuxConstants.TERMUX_HOME_DIR, "projects/backed_up_projects").apply { mkdirs() }
+        val backupDir = File(TermuxConstants.TERMUX_HOME_DIR, "projects/backed_up_projects").apply {
+            mkdirs()
+        }
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val backupFileName = "${project.name}_backup_$timestamp.zip"
         val backupFile = File(backupDir, backupFileName)
@@ -577,7 +617,13 @@ private fun backupProject(context: Context, project: File, onComplete: () -> Uni
                 onSuccess = {
                     MaterialAlertDialogBuilder(context)
                         .setTitle(context.getString(R.string.backup_completed_title))
-                        .setMessage(context.getString(R.string.backup_completed_message, project.name, backupFile.absolutePath))
+                        .setMessage(
+                            context.getString(
+                                R.string.backup_completed_message,
+                                project.name,
+                                backupFile.absolutePath
+                            )
+                        )
                         .setPositiveButton(android.R.string.ok, null)
                         .show()
                     onComplete()
@@ -585,10 +631,15 @@ private fun backupProject(context: Context, project: File, onComplete: () -> Uni
                 onFailure = { e ->
                     MaterialAlertDialogBuilder(context)
                         .setTitle(context.getString(R.string.backup_failed_title))
-                        .setMessage(context.getString(R.string.backup_failed_message, e.localizedMessage ?: e.toString()))
+                        .setMessage(
+                            context.getString(
+                                R.string.backup_failed_message,
+                                e.localizedMessage ?: e.toString()
+                            )
+                        )
                         .setPositiveButton(android.R.string.ok, null)
                         .show()
-                },
+                }
             )
         }
     }

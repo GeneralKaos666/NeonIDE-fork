@@ -5,8 +5,8 @@ import android.view.MenuItem
 import android.view.View
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.SheetValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.android.material.appbar.MaterialToolbar
 import com.neonide.studio.R
@@ -31,15 +31,16 @@ class EditorUiManager(
     fun setupAcsBottomSheet() {
         // Now handled by Compose
         BuildOutputBuffer.clear()
-        
+
         val prefs = activity.getPreferences(Context.MODE_PRIVATE)
         symbolBarVisible = prefs.getBoolean("symbol_bar_visible", true)
     }
 
     fun collapseBottomSheet(): Boolean {
         val state = scaffoldState ?: return false
-        if (state.bottomSheetState.currentValue == SheetValue.Expanded || 
-            state.bottomSheetState.currentValue == SheetValue.PartiallyExpanded) {
+        if (state.bottomSheetState.currentValue == SheetValue.Expanded ||
+            state.bottomSheetState.currentValue == SheetValue.PartiallyExpanded
+        ) {
             uiScope.launch {
                 state.bottomSheetState.partialExpand()
             }

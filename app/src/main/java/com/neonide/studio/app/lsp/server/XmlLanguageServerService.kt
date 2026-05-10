@@ -26,6 +26,7 @@ class XmlLanguageServerService : Service() {
 
     // Debug: log the first request/response payloads to understand init failures
     @Volatile private var loggedClientPayload = false
+
     @Volatile private var loggedServerPayload = false
 
     companion object {
@@ -114,12 +115,17 @@ class XmlLanguageServerService : Service() {
 
                     val environment = processBuilder.environment()
                     environment["HOME"] = TermuxConstants.TERMUX_HOME_DIR_PATH
-                    environment["PATH"] = "${TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH}:${environment["PATH"]}"
+                    environment["PATH"] =
+                        "${TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH}:${environment["PATH"]}"
 
                     process = try {
                         processBuilder.start()
                     } catch (e: IOException) {
-                        Logger.logStackTraceWithMessage(TAG, "Failed to start LemMinX process. Is openjdk installed in Termux?", e)
+                        Logger.logStackTraceWithMessage(
+                            TAG,
+                            "Failed to start LemMinX process. Is openjdk installed in Termux?",
+                            e
+                        )
                         runCatching { clientSocket.close() }
                         break
                     }
@@ -132,7 +138,11 @@ class XmlLanguageServerService : Service() {
                             }
                         } catch (e: Exception) {
                             if (!isExpectedSocketError(e)) {
-                                Logger.logStackTraceWithMessage(TAG, "Error reading server stderr", e)
+                                Logger.logStackTraceWithMessage(
+                                    TAG,
+                                    "Error reading server stderr",
+                                    e
+                                )
                             }
                         }
                     }
@@ -153,7 +163,12 @@ class XmlLanguageServerService : Service() {
                                 if (!loggedClientPayload && preview.length < 4096) {
                                     preview.append(String(buf, 0, n, Charsets.UTF_8))
                                     if (preview.contains("\"method\":\"initialize\"")) {
-                                        Logger.logDebug(TAG, "LSP CLIENT->SERVER first initialize payload (preview):\n${preview.take(4096)}")
+                                        Logger.logDebug(
+                                            TAG,
+                                            "LSP CLIENT->SERVER first initialize payload (preview):\n${preview.take(
+                                                4096
+                                            )}"
+                                        )
                                         loggedClientPayload = true
                                     }
                                 }
@@ -163,7 +178,11 @@ class XmlLanguageServerService : Service() {
                             }
                         } catch (e: IOException) {
                             if (process?.isAlive == true && !isExpectedSocketError(e)) {
-                                Logger.logStackTraceWithMessage(TAG, "Error piping client to server", e)
+                                Logger.logStackTraceWithMessage(
+                                    TAG,
+                                    "Error piping client to server",
+                                    e
+                                )
                             }
                         } finally {
                             runCatching { serverOutput.close() }
@@ -181,8 +200,13 @@ class XmlLanguageServerService : Service() {
                                 if (!loggedServerPayload && preview.length < 4096) {
                                     preview.append(String(buf, 0, n, Charsets.UTF_8))
                                     if (preview.length > 50) { // Log early content
-                                         Logger.logDebug(TAG, "LSP SERVER->CLIENT first response payload (preview):\n${preview.take(4096)}")
-                                         loggedServerPayload = true
+                                        Logger.logDebug(
+                                            TAG,
+                                            "LSP SERVER->CLIENT first response payload (preview):\n${preview.take(
+                                                4096
+                                            )}"
+                                        )
+                                        loggedServerPayload = true
                                     }
                                 }
 
@@ -191,7 +215,11 @@ class XmlLanguageServerService : Service() {
                             }
                         } catch (e: IOException) {
                             if (!isExpectedSocketError(e)) {
-                                Logger.logStackTraceWithMessage(TAG, "Error piping server to client", e)
+                                Logger.logStackTraceWithMessage(
+                                    TAG,
+                                    "Error piping server to client",
+                                    e
+                                )
                             }
                         } finally {
                             runCatching { clientOutput.close() }
@@ -259,7 +287,10 @@ class XmlLanguageServerService : Service() {
                     }
                 }
                 extracted = true
-                Logger.logDebug(TAG, "Extracted LemMinX jar from assets/$assetPath to ${jarFile.absolutePath}")
+                Logger.logDebug(
+                    TAG,
+                    "Extracted LemMinX jar from assets/$assetPath to ${jarFile.absolutePath}"
+                )
                 break
             } catch (_: IOException) {
                 // Try next asset
@@ -275,8 +306,8 @@ class XmlLanguageServerService : Service() {
         if (e is java.io.InterruptedIOException) return true
         val msg = e.message ?: return false
         return msg.contains("Broken pipe", ignoreCase = true) ||
-                msg.contains("Stream closed", ignoreCase = true) ||
-                msg.contains("Socket closed", ignoreCase = true) ||
-                msg.contains("Connection reset", ignoreCase = true)
+            msg.contains("Stream closed", ignoreCase = true) ||
+            msg.contains("Socket closed", ignoreCase = true) ||
+            msg.contains("Connection reset", ignoreCase = true)
     }
 }

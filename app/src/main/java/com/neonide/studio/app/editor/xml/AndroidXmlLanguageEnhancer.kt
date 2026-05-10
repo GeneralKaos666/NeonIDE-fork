@@ -31,10 +31,8 @@ import java.io.File
  *
  * It keeps the base language's highlighting/formatting/snippets/etc.
  */
-class AndroidXmlLanguageEnhancer(
-    private val base: Language,
-    private val file: File?
-) : Language by base {
+class AndroidXmlLanguageEnhancer(private val base: Language, private val file: File?) :
+    Language by base {
 
     override fun requireAutoComplete(
         content: ContentReference,
@@ -66,9 +64,12 @@ class AndroidXmlLanguageEnhancer(
                     AndroidXmlCompletions.tagNames(prefix).forEach { tag ->
                         publisher.addItem(
                             SimpleCompletionItem(
-                                /*label*/ tag,
-                                /*prefixLength*/ prefix.length,
-                                /*commitText*/ tag
+                                /*label*/
+                                tag,
+                                /*prefixLength*/
+                                prefix.length,
+                                /*commitText*/
+                                tag
                             )
                         )
                     }
@@ -79,7 +80,14 @@ class AndroidXmlLanguageEnhancer(
                         publisher.addItem(
                             XmlAttrCompletionItem(
                                 label = attr,
-                                desc = if (attr.startsWith("android:")) "From package 'android'" else "",
+                                desc = if (attr.startsWith(
+                                        "android:"
+                                    )
+                                ) {
+                                    "From package 'android'"
+                                } else {
+                                    ""
+                                },
                                 attrName = attr,
                                 replacePrefixLength = prefix.length
                             )
@@ -91,9 +99,12 @@ class AndroidXmlLanguageEnhancer(
                     AndroidXmlCompletions.attributeValues(ctx.attributeName, prefix).forEach { v ->
                         publisher.addItem(
                             SimpleCompletionItem(
-                                /*label*/ v,
-                                /*prefixLength*/ prefix.length,
-                                /*commitText*/ v
+                                /*label*/
+                                v,
+                                /*prefixLength*/
+                                prefix.length,
+                                /*commitText*/
+                                v
                             ).kind(io.github.rosemoe.sora.lang.completion.CompletionItemKind.Value)
                         )
                     }
@@ -164,6 +175,7 @@ class AndroidXmlLanguageEnhancer(
             """
 
         private val tsInitLock = Any()
+
         @Volatile private var tsLoaded: Boolean = false
 
         private fun ensureTreeSitterLoaded() {
@@ -180,7 +192,11 @@ class AndroidXmlLanguageEnhancer(
          * - if user typed '</' -> auto-insert tag name + optional '>'
          * - if user typed '/>' -> auto-insert missing '>'
          */
-        fun applyAdvancedSlashEditIfNeeded(currentFile: File?, editor: CodeEditor, e: io.github.rosemoe.sora.event.ContentChangeEvent) {
+        fun applyAdvancedSlashEditIfNeeded(
+            currentFile: File?,
+            editor: CodeEditor,
+            e: io.github.rosemoe.sora.event.ContentChangeEvent
+        ) {
             if (e.isCausedByUndoManager) return
             if (e.action != io.github.rosemoe.sora.event.ContentChangeEvent.ACTION_INSERT) return
 
@@ -231,20 +247,29 @@ class AndroidXmlLanguageEnhancer(
                 parser.language = TSLanguageXml.getInstance()
                 parser.parseString(content.toString()).use { tree ->
                     TSQuery.create(TSLanguageXml.getInstance(), TAG_INFO_QUERY).use { query ->
-                        if (!query.canAccess() || query.errorType != com.itsaky.androidide.treesitter.TSQueryError.None) {
+                        if (!query.canAccess() ||
+                            query.errorType != com.itsaky.androidide.treesitter.TSQueryError.None
+                        ) {
                             return SlashEdits(null)
                         }
 
                         TSQueryCursor.create().use { cursor ->
                             cursor.exec(query, tree.rootNode)
                             val matches = cursor.toList()
-                            val match = findMatchAt(query, matches, insertionIndex) ?: return SlashEdits(null)
+                            val match =
+                                findMatchAt(query, matches, insertionIndex)
+                                    ?: return SlashEdits(null)
 
                             val captures = match.captures
                             if (!openSlash) {
                                 // Empty element closing '/>' missing '>'
-                                val closeCapture = captures.firstOrNull { query.getCaptureNameForId(it.index) == "tag.close" }
-                                val insertText = if (closeCapture != null && closeCapture.node.startByte == closeCapture.node.endByte) {
+                                val closeCapture = captures.firstOrNull {
+                                    query.getCaptureNameForId(it.index) ==
+                                        "tag.close"
+                                }
+                                val insertText = if (closeCapture != null &&
+                                    closeCapture.node.startByte == closeCapture.node.endByte
+                                ) {
                                     ">"
                                 } else {
                                     null
@@ -252,19 +277,29 @@ class AndroidXmlLanguageEnhancer(
                                 return SlashEdits(insertText)
                             } else {
                                 // Closing tag: '</' -> insert tag name and maybe '>'
-                                val tagNameCapture = captures.firstOrNull { query.getCaptureNameForId(it.index) == "tag.start.name" }
-                                    ?: return SlashEdits(null)
+                                val tagNameCapture =
+                                    captures.firstOrNull {
+                                        query.getCaptureNameForId(it.index) ==
+                                            "tag.start.name"
+                                    }
+                                        ?: return SlashEdits(null)
 
                                 val nameStart = tagNameCapture.node.startByte / 2
                                 val nameEnd = tagNameCapture.node.endByte / 2
-                                val tagName = if (nameStart < nameEnd && nameEnd <= content.length) {
-                                    content.substring(nameStart, nameEnd)
-                                } else {
-                                    null
-                                } ?: return SlashEdits(null)
+                                val tagName =
+                                    if (nameStart < nameEnd && nameEnd <= content.length) {
+                                        content.substring(nameStart, nameEnd)
+                                    } else {
+                                        null
+                                    } ?: return SlashEdits(null)
 
-                                val closeCapture = captures.firstOrNull { query.getCaptureNameForId(it.index) == "tag.end.close" }
-                                val needsGt = closeCapture != null && closeCapture.node.startByte == closeCapture.node.endByte
+                                val closeCapture = captures.firstOrNull {
+                                    query.getCaptureNameForId(it.index) ==
+                                        "tag.end.close"
+                                }
+                                val needsGt =
+                                    closeCapture != null &&
+                                        closeCapture.node.startByte == closeCapture.node.endByte
 
                                 return SlashEdits(tagName + if (needsGt) ">" else "")
                             }
@@ -274,12 +309,19 @@ class AndroidXmlLanguageEnhancer(
             }
         }
 
-        private fun findMatchAt(query: TSQuery, matches: List<com.itsaky.androidide.treesitter.TSQueryMatch>, index: Int): com.itsaky.androidide.treesitter.TSQueryMatch? {
+        private fun findMatchAt(
+            query: TSQuery,
+            matches: List<com.itsaky.androidide.treesitter.TSQueryMatch>,
+            index: Int
+        ): com.itsaky.androidide.treesitter.TSQueryMatch? {
             for (m in matches) {
                 for (c in m.captures) {
-                    val name = runCatching { query.getCaptureNameForId(c.index) }.getOrNull() ?: continue
+                    val name =
+                        runCatching { query.getCaptureNameForId(c.index) }.getOrNull() ?: continue
                     val startCharIndex = c.node.startByte / 2
-                    if (startCharIndex == index && (name == "tag.slash" || name == "tag.end.slash")) {
+                    if (startCharIndex == index &&
+                        (name == "tag.slash" || name == "tag.end.slash")
+                    ) {
                         return m
                     }
                 }
@@ -464,7 +506,7 @@ private object AndroidXmlCompletions {
         "tools:src",
         "tools:visibility",
         "tools:context",
-        "tools:targetApi",
+        "tools:targetApi"
     )
 
     fun tagNames(prefix: String): List<String> {
@@ -538,12 +580,26 @@ private object AndroidXmlCompletions {
 
     fun attributeValues(attributeName: String?, prefix: String): List<String> {
         val values = when (attributeName) {
-            "android:layout_width", "android:layout_height" -> listOf("match_parent", "wrap_content", "0dp")
-            "android:visibility" -> listOf("visible", "invisible", "gone")
-            "android:orientation" -> listOf("horizontal", "vertical")
-            "android:gravity", "android:layout_gravity" -> listOf(
-                "start", "end", "top", "bottom", "center", "center_vertical", "center_horizontal"
+            "android:layout_width", "android:layout_height" -> listOf(
+                "match_parent",
+                "wrap_content",
+                "0dp"
             )
+
+            "android:visibility" -> listOf("visible", "invisible", "gone")
+
+            "android:orientation" -> listOf("horizontal", "vertical")
+
+            "android:gravity", "android:layout_gravity" -> listOf(
+                "start",
+                "end",
+                "top",
+                "bottom",
+                "center",
+                "center_vertical",
+                "center_horizontal"
+            )
+
             else -> emptyList()
         }
 
@@ -574,7 +630,13 @@ private class XmlCompletionContext(
 
             // Determine whether we are inside a tag by scanning backwards from the global index.
             // This works across line breaks (common in layout XML).
-            val idx = if (position.index >= 0) position.index else content.reference.getCharIndex(position.line, position.column)
+            val idx = if (position.index >=
+                0
+            ) {
+                position.index
+            } else {
+                content.reference.getCharIndex(position.line, position.column)
+            }
 
             var lastLtIndex = -1
             var lastGtIndex = -1
@@ -636,7 +698,10 @@ private class XmlCompletionContext(
             var i = end
             while (i > 0) {
                 val c = line[i - 1]
-                val ok = MyCharacter.isJavaIdentifierPart(c) || c == ':' || c == '-' || c == '.' || c == '/' || c == '@'
+                val ok =
+                    MyCharacter.isJavaIdentifierPart(c) || c == ':' || c == '-' || c == '.' ||
+                        c == '/' ||
+                        c == '@'
                 if (!ok) break
                 i--
             }

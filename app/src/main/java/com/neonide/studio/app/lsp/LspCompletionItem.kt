@@ -5,14 +5,19 @@ import io.github.rosemoe.sora.lang.completion.SimpleCompletionItem
 import org.eclipse.lsp4j.CompletionItem
 
 class LspCompletionItem(val lspItem: CompletionItem, prefixLength: Int) :
-    SimpleCompletionItem(lspItem.label, lspItem.detail ?: "", prefixLength, lspItem.insertText ?: lspItem.label) {
+    SimpleCompletionItem(
+        lspItem.label,
+        lspItem.detail ?: "",
+        prefixLength,
+        lspItem.insertText ?: lspItem.label
+    ) {
 
     init {
         this.kind = mapKind(lspItem.kind)
     }
 
-    private fun mapKind(lspKind: org.eclipse.lsp4j.CompletionItemKind?): CompletionItemKind {
-        return when (lspKind) {
+    private fun mapKind(lspKind: org.eclipse.lsp4j.CompletionItemKind?): CompletionItemKind =
+        when (lspKind) {
             org.eclipse.lsp4j.CompletionItemKind.Method -> CompletionItemKind.Method
             org.eclipse.lsp4j.CompletionItemKind.Function -> CompletionItemKind.Function
             org.eclipse.lsp4j.CompletionItemKind.Constructor -> CompletionItemKind.Constructor
@@ -39,5 +44,4 @@ class LspCompletionItem(val lspItem: CompletionItem, prefixLength: Int) :
             org.eclipse.lsp4j.CompletionItemKind.TypeParameter -> CompletionItemKind.TypeParameter
             else -> CompletionItemKind.Text
         }
-    }
 }

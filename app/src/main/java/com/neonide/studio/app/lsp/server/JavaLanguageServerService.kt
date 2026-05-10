@@ -21,6 +21,7 @@ class JavaLanguageServerService : Service() {
 
     // Debug: log the first request/response payloads to understand init failures
     @Volatile private var loggedClientPayload = false
+
     @Volatile private var loggedServerPayload = false
 
     companion object {
@@ -28,9 +29,7 @@ class JavaLanguageServerService : Service() {
         const val SOCKET_NAME = "java-lang-server"
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Starting Java Language Server Service...")
@@ -53,7 +52,7 @@ class JavaLanguageServerService : Service() {
         serverThread = thread {
             try {
                 val serverDir = setupServerDirectory()
-                
+
                 // Construct command to start Java Language Server directly
                 val termuxJava = File(TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH, "java")
                 val javaExecutable = if (termuxJava.exists()) termuxJava.absolutePath else "java"
@@ -98,8 +97,9 @@ class JavaLanguageServerService : Service() {
                     processBuilder.directory(serverDir)
                     val environment = processBuilder.environment()
                     environment["HOME"] = TermuxConstants.TERMUX_HOME_DIR_PATH
-                    environment["PATH"] = "${TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH}:${environment["PATH"]}"
-                    
+                    environment["PATH"] =
+                        "${TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH}:${environment["PATH"]}"
+
                     process = processBuilder.start()
 
                     // Capture stderr
@@ -131,7 +131,12 @@ class JavaLanguageServerService : Service() {
                                 if (!loggedClientPayload && preview.length < 4096) {
                                     preview.append(String(buf, 0, n, Charsets.UTF_8))
                                     if (preview.contains("\"method\":\"initialize\"")) {
-                                        Log.d(TAG, "LSP CLIENT->SERVER first initialize payload (preview):\n${preview.take(4096)}")
+                                        Log.d(
+                                            TAG,
+                                            "LSP CLIENT->SERVER first initialize payload (preview):\n${preview.take(
+                                                4096
+                                            )}"
+                                        )
                                         loggedClientPayload = true
                                     }
                                 }
@@ -159,8 +164,15 @@ class JavaLanguageServerService : Service() {
 
                                 if (!loggedServerPayload && preview.length < 4096) {
                                     preview.append(String(buf, 0, n, Charsets.UTF_8))
-                                    if (preview.contains("\"result\"") || preview.contains("\"error\"")) {
-                                        Log.d(TAG, "LSP SERVER->CLIENT first response payload (preview):\n${preview.take(4096)}")
+                                    if (preview.contains("\"result\"") ||
+                                        preview.contains("\"error\"")
+                                    ) {
+                                        Log.d(
+                                            TAG,
+                                            "LSP SERVER->CLIENT first response payload (preview):\n${preview.take(
+                                                4096
+                                            )}"
+                                        )
                                         loggedServerPayload = true
                                     }
                                 }
@@ -223,7 +235,7 @@ class JavaLanguageServerService : Service() {
     private fun extractServerAssets(targetDir: File) {
         try {
             // targetDir is already clean from setupServerDirectory
-            
+
             val assetStream = try {
                 assets.open("servers/java-language-server.zip")
             } catch (e: IOException) {

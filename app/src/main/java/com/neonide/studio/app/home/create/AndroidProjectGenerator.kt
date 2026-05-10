@@ -20,7 +20,7 @@ object AndroidProjectGenerator {
         applicationId: String,
         minSdk: Int,
         language: String,
-        useKts: Boolean = false,
+        useKts: Boolean = false
     ) {
         require(!projectDir.exists()) { "Project directory already exists" }
 
@@ -45,27 +45,51 @@ object AndroidProjectGenerator {
         valuesDir.mkdirs()
         valuesNightDir.mkdirs()
 
-        val addAndroidX = template.kind != ProjectTemplate.Kind.NO_ANDROIDX_ACTIVITY && template.kind != ProjectTemplate.Kind.COMPOSE_ACTIVITY
+        val addAndroidX =
+            template.kind != ProjectTemplate.Kind.NO_ANDROIDX_ACTIVITY &&
+                template.kind != ProjectTemplate.Kind.COMPOSE_ACTIVITY
 
         // Root build files
-        writeText(File(projectDir, if (useKts) "settings.gradle.kts" else "settings.gradle"), settingsGradle(projectDir.name, useKts))
-        writeText(File(projectDir, if (useKts) "build.gradle.kts" else "build.gradle"), rootBuildGradle(useKts))
+        writeText(
+            File(projectDir, if (useKts) "settings.gradle.kts" else "settings.gradle"),
+            settingsGradle(projectDir.name, useKts)
+        )
+        writeText(
+            File(projectDir, if (useKts) "build.gradle.kts" else "build.gradle"),
+            rootBuildGradle(useKts)
+        )
 
         // Copy base root files from ACS templates for 100% identical output.
-        copyAsset(context, "acs-templates/base/root/gradle.properties", File(projectDir, "gradle.properties"))
+        copyAsset(
+            context,
+            "acs-templates/base/root/gradle.properties",
+            File(projectDir, "gradle.properties")
+        )
 
         // Version catalog like Android Code Studio/ATC
         writeLibsVersionsToml(context, projectDir)
 
         // Module proguard rules (in this repo we put it at root historically; keep writing it for compatibility)
-        copyAsset(context, "acs-templates/base/module/android/proguard-rules.pro", File(projectDir, "proguard-rules.pro"))
+        copyAsset(
+            context,
+            "acs-templates/base/module/android/proguard-rules.pro",
+            File(projectDir, "proguard-rules.pro")
+        )
 
         // Gradle wrapper: copy the same scripts/files used by Android Code Studio (ATC assets)
         // so generated projects behave correctly.
         val wrapperDir = File(projectDir, "gradle/wrapper")
         wrapperDir.mkdirs()
-        copyAsset(context, "gradle/wrapper/gradle-wrapper.jar", File(wrapperDir, "gradle-wrapper.jar"))
-        copyAsset(context, "gradle/wrapper/gradle-wrapper.properties", File(wrapperDir, "gradle-wrapper.properties"))
+        copyAsset(
+            context,
+            "gradle/wrapper/gradle-wrapper.jar",
+            File(wrapperDir, "gradle-wrapper.jar")
+        )
+        copyAsset(
+            context,
+            "gradle/wrapper/gradle-wrapper.properties",
+            File(wrapperDir, "gradle-wrapper.properties")
+        )
 
         // gradlew scripts: copy ATC scripts (not minimal placeholders)
         copyAsset(context, "gradle/gradlew", File(projectDir, "gradlew"))
@@ -78,22 +102,32 @@ object AndroidProjectGenerator {
         // Copy base resources from ATC (icons/themes/backup rules) for identical output.
         // Individual templates may overwrite/add additional resources later.
         copyAtcBaseRes(context, resDir)
-        
+
         // Ensure app_name matches the actual project name by overriding the base strings.xml
-        writeText(File(valuesDir, "strings.xml"), """<?xml version="1.0" encoding="utf-8"?>
+        writeText(
+            File(valuesDir, "strings.xml"),
+            """<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">$name</string>
 </resources>
-""".trimIndent() + "\n")
+            """.trimIndent() + "\n"
+        )
 
         // Themes like ACS (Material3 DayNight + optional actionbar)
         // For some templates we still adjust theme parent.
-        val actionBar = template.kind == ProjectTemplate.Kind.BOTTOM_NAV_ACTIVITY || template.kind == ProjectTemplate.Kind.NO_ACTIVITY
-        val writeThemes = template.kind != ProjectTemplate.Kind.NO_ANDROIDX_ACTIVITY && template.kind != ProjectTemplate.Kind.COMPOSE_ACTIVITY
+        val actionBar =
+            template.kind == ProjectTemplate.Kind.BOTTOM_NAV_ACTIVITY ||
+                template.kind == ProjectTemplate.Kind.NO_ACTIVITY
+        val writeThemes =
+            template.kind != ProjectTemplate.Kind.NO_ANDROIDX_ACTIVITY &&
+                template.kind != ProjectTemplate.Kind.COMPOSE_ACTIVITY
         if (writeThemes) {
             // Override themes.xml with our selected variant (ATC default is NoActionBar).
             writeText(File(valuesDir, "themes.xml"), simpleMaterial3Theme("AppTheme", actionBar))
-            writeText(File(valuesNightDir, "themes.xml"), simpleMaterial3Theme("AppTheme", actionBar))
+            writeText(
+                File(valuesNightDir, "themes.xml"),
+                simpleMaterial3Theme("AppTheme", actionBar)
+            )
         }
 
         // App module build
@@ -104,12 +138,15 @@ object AndroidProjectGenerator {
                 minSdk = minSdk,
                 useKotlin = useKotlin,
                 useKts = useKts,
-                templateKind = template.kind,
-            ),
+                templateKind = template.kind
+            )
         )
 
         // Manifest
-        writeText(File(srcMain, "AndroidManifest.xml"), appManifest(applicationId, template.kind, writeThemes, name))
+        writeText(
+            File(srcMain, "AndroidManifest.xml"),
+            appManifest(applicationId, template.kind, writeThemes, name)
+        )
 
         // Sources + resources per template
         val pkgDir = File(codeDir, applicationId.replace('.', '/')).apply { mkdirs() }
@@ -144,7 +181,10 @@ object AndroidProjectGenerator {
             ProjectTemplate.Kind.BOTTOM_NAV_ACTIVITY -> {
                 val navGraphName = "mobile_navigation"
                 copyTemplateRes(context, "bottomNav", resDir)
-                writeText(File(resDir, "navigation/${navGraphName}.xml"), bottomNavNavigationXml(applicationId, navGraphName))
+                writeText(
+                    File(resDir, "navigation/$navGraphName.xml"),
+                    bottomNavNavigationXml(applicationId, navGraphName)
+                )
                 mergeStringsXml(valuesDir, bottomNavStringsXml())
                 writeMainActivityBottomNav(pkgDir, applicationId, useKotlin)
                 writeBottomNavSources(codeDir, applicationId, useKotlin)
@@ -153,7 +193,10 @@ object AndroidProjectGenerator {
             ProjectTemplate.Kind.NAV_DRAWER_ACTIVITY -> {
                 val navGraphName = "mobile_navigation"
                 copyTemplateRes(context, "navDrawer", resDir)
-                writeText(File(resDir, "navigation/${navGraphName}.xml"), navDrawerNavigationXml(applicationId, navGraphName))
+                writeText(
+                    File(resDir, "navigation/$navGraphName.xml"),
+                    navDrawerNavigationXml(applicationId, navGraphName)
+                )
                 mergeStringsXml(valuesDir, navDrawerStringsXml())
                 writeMainActivityNavDrawer(pkgDir, applicationId, useKotlin)
                 writeNavDrawerSources(codeDir, applicationId, useKotlin)
@@ -194,7 +237,7 @@ object AndroidProjectGenerator {
                 """<?xml version="1.0" encoding="utf-8"?>
 <resources>
 </resources>
-""".trimIndent() + "\n",
+                """.trimIndent() + "\n"
             )
         }
 
@@ -205,7 +248,10 @@ object AndroidProjectGenerator {
             .toSet()
 
         // Extract string nodes from the provided snippet (it may or may not include XML header).
-        val additionalNodes = Regex("""<string\s+name=\"([^\"]+)\"[^>]*>.*?</string>""", setOf(RegexOption.DOT_MATCHES_ALL))
+        val additionalNodes = Regex(
+            """<string\s+name=\"([^\"]+)\"[^>]*>.*?</string>""",
+            setOf(RegexOption.DOT_MATCHES_ALL)
+        )
             .findAll(additionalStringsXml)
             .map { it.value.trim() }
             .filter { node ->
@@ -246,10 +292,14 @@ object AndroidProjectGenerator {
     private fun copyAssetsDir(context: Context, assetRoot: String, outRoot: File) {
         // Walk assets recursively by listing directories.
         fun copyDir(path: String) {
-            val entries = runCatching { context.assets.list(path)?.toList() ?: emptyList() }.getOrDefault(emptyList())
+            val entries = runCatching {
+                context.assets.list(path)?.toList() ?: emptyList()
+            }.getOrDefault(emptyList())
             for (name in entries) {
                 val child = if (path.isBlank()) name else "$path/$name"
-                val childEntries = runCatching { context.assets.list(child)?.toList() ?: emptyList() }.getOrDefault(emptyList())
+                val childEntries = runCatching {
+                    context.assets.list(child)?.toList() ?: emptyList()
+                }.getOrDefault(emptyList())
                 if (childEntries.isNotEmpty()) {
                     copyDir(child)
                 } else {
@@ -266,7 +316,6 @@ object AndroidProjectGenerator {
 
         copyDir(assetRoot)
     }
-
 
     // ----------------- Gradle -----------------
 
@@ -381,7 +430,13 @@ include(":app")
         return buildString {
             appendLine("# Project-wide Gradle settings.")
             appendLine("org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8")
-            if (addAndroidX) appendLine("android.useAndroidX=true") else appendLine("android.useAndroidX=false")
+            if (addAndroidX) {
+                appendLine(
+                    "android.useAndroidX=true"
+                )
+            } else {
+                appendLine("android.useAndroidX=false")
+            }
             appendLine("android.nonTransitiveRClass=true")
             appendLine("kotlin.code.style=official")
         }.trimEnd() + "\n"
@@ -435,19 +490,25 @@ include(":app")
         minSdk: Int,
         useKotlin: Boolean,
         useKts: Boolean,
-        templateKind: ProjectTemplate.Kind,
+        templateKind: ProjectTemplate.Kind
     ): String {
-        val addAndroidX = templateKind != ProjectTemplate.Kind.NO_ANDROIDX_ACTIVITY && templateKind != ProjectTemplate.Kind.COMPOSE_ACTIVITY
+        val addAndroidX =
+            templateKind != ProjectTemplate.Kind.NO_ANDROIDX_ACTIVITY &&
+                templateKind != ProjectTemplate.Kind.COMPOSE_ACTIVITY
         val enableNdkBuild = templateKind == ProjectTemplate.Kind.CPP_ACTIVITY
         val enableCompose = templateKind == ProjectTemplate.Kind.COMPOSE_ACTIVITY
 
         val deps = mutableListOf<String>()
 
-        fun imp(notation: String): String {
-            return if (useKts) "implementation(\"$notation\")" else "implementation '$notation'"
-        }
+        fun imp(notation: String): String =
+            if (useKts) "implementation(\"$notation\")" else "implementation '$notation'"
 
-        if (useKotlin) deps += imp("androidx.core:core-ktx:1.13.1") else deps += imp("androidx.core:core:1.13.1")
+        if (useKotlin) {
+            deps += imp("androidx.core:core-ktx:1.13.1")
+        } else {
+            deps +=
+                imp("androidx.core:core:1.13.1")
+        }
         if (addAndroidX) deps += imp("androidx.appcompat:appcompat:1.6.1")
         deps += imp("com.google.android.material:material:1.12.0")
 
@@ -508,7 +569,9 @@ include(":app")
 
         val ndkVersionStr = if (enableNdkBuild) {
             if (useKts) "ndkVersion = \"29.0.14206865\"" else "ndkVersion '29.0.14206865'"
-        } else ""
+        } else {
+            ""
+        }
 
         val ndkBlock = if (enableNdkBuild) {
             if (useKts) {
@@ -516,7 +579,9 @@ include(":app")
             } else {
                 "externalNativeBuild { ndkBuild { path 'src/main/jni/Android.mk' } }"
             }
-        } else ""
+        } else {
+            ""
+        }
 
         val depsBlock = deps.joinToString("\n    ")
 
@@ -595,9 +660,14 @@ dependencies {
 
     // ----------------- Manifest -----------------
 
-    private fun appManifest(appId: String, kind: ProjectTemplate.Kind, writeThemes: Boolean, projectName: String): String {
+    private fun appManifest(
+        appId: String,
+        kind: ProjectTemplate.Kind,
+        writeThemes: Boolean,
+        projectName: String
+    ): String {
         val themeAttr = if (writeThemes) "@style/AppTheme" else "@android:style/Theme.DeviceDefault"
-        
+
         // For templates that don't have a strings.xml app_name by default, we use the project name directly
         // or rely on the strings.xml we just wrote.
         val appLabel = "@string/app_name"
@@ -611,7 +681,9 @@ dependencies {
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>"""
-        } else ""
+        } else {
+            ""
+        }
 
         return """
 <?xml version="1.0" encoding="utf-8"?>
@@ -639,17 +711,15 @@ $activityBlock
 
     private fun emptyValuesFile() = """<?xml version="1.0" encoding="utf-8"?>
 <resources />
-""".trimIndent() + "\n"
+    """.trimIndent() + "\n"
 
-    private fun simpleMaterial3Theme(themeName: String, actionBar: Boolean): String {
-        return """
+    private fun simpleMaterial3Theme(themeName: String, actionBar: Boolean): String = """
             <resources xmlns:tools="http://schemas.android.com/tools">
               <style name="Base.$themeName" parent="Theme.Material3.DayNight${if (!actionBar) ".NoActionBar" else ""}">
               </style>
               <style name="$themeName" parent="Base.$themeName" />
             </resources>
-        """.trimIndent() + "\n"
-    }
+    """.trimIndent() + "\n"
 
     private fun baseLayoutContentMain() = """<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -723,11 +793,12 @@ $activityBlock
 
     // ----------------- Navigation graphs & strings -----------------
 
-    private fun bottomNavNavigationXml(pkg: String, navGraphName: String) = """<?xml version="1.0" encoding="utf-8"?>
+    private fun bottomNavNavigationXml(pkg: String, navGraphName: String) =
+        """<?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/${navGraphName}"
+    android:id="@+id/$navGraphName"
     app:startDestination="@+id/navigation_home">
 
     <fragment
@@ -750,11 +821,12 @@ $activityBlock
 </navigation>
 """ + "\n"
 
-    private fun navDrawerNavigationXml(pkg: String, navGraphName: String) = """<?xml version="1.0" encoding="utf-8"?>
+    private fun navDrawerNavigationXml(pkg: String, navGraphName: String) =
+        """<?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/${navGraphName}"
+    android:id="@+id/$navGraphName"
     app:startDestination="@+id/nav_home">
 
     <fragment
@@ -813,48 +885,123 @@ $activityBlock
     // ----------------- Activities + sources -----------------
 
     private fun writeMainActivityEmpty(pkgDir: File, pkg: String, kotlin: Boolean) {
-        writeText(File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"), if (kotlin) emptyActivityKt(pkg) else emptyActivityJava(pkg))
+        writeText(
+            File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"),
+            if (kotlin) emptyActivityKt(pkg) else emptyActivityJava(pkg)
+        )
     }
 
     private fun writeMainActivityBasic(pkgDir: File, pkg: String, kotlin: Boolean) {
-        writeText(File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"), if (kotlin) basicActivityKt(pkg) else basicActivityJava(pkg))
+        writeText(
+            File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"),
+            if (kotlin) basicActivityKt(pkg) else basicActivityJava(pkg)
+        )
     }
 
     private fun writeMainActivityWithCpp(pkgDir: File, pkg: String, kotlin: Boolean) {
-        writeText(File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"), if (kotlin) cppActivityKt(pkg) else cppActivityJava(pkg))
+        writeText(
+            File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"),
+            if (kotlin) cppActivityKt(pkg) else cppActivityJava(pkg)
+        )
     }
 
     private fun writeMainActivityNoAndroidX(pkgDir: File, pkg: String, kotlin: Boolean) {
-        writeText(File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"), if (kotlin) noAndroidXActivityKt(pkg) else noAndroidXActivityJava(pkg))
+        writeText(
+            File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"),
+            if (kotlin) noAndroidXActivityKt(pkg) else noAndroidXActivityJava(pkg)
+        )
     }
 
     private fun writeMainActivityBottomNav(pkgDir: File, pkg: String, kotlin: Boolean) {
-        writeText(File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"), if (kotlin) bottomNavActivityKt(pkg) else bottomNavActivityJava(pkg))
+        writeText(
+            File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"),
+            if (kotlin) bottomNavActivityKt(pkg) else bottomNavActivityJava(pkg)
+        )
     }
 
     private fun writeMainActivityNavDrawer(pkgDir: File, pkg: String, kotlin: Boolean) {
-        writeText(File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"), if (kotlin) navDrawerActivityKt(pkg) else navDrawerActivityJava(pkg))
+        writeText(
+            File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"),
+            if (kotlin) navDrawerActivityKt(pkg) else navDrawerActivityJava(pkg)
+        )
     }
 
     private fun writeMainActivityTabbed(pkgDir: File, pkg: String, kotlin: Boolean) {
-        writeText(File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"), if (kotlin) tabbedActivityKt(pkg) else tabbedActivityJava(pkg))
+        writeText(
+            File(pkgDir, if (kotlin) "MainActivity.kt" else "MainActivity.java"),
+            if (kotlin) tabbedActivityKt(pkg) else tabbedActivityJava(pkg)
+        )
     }
 
     private fun writeBottomNavSources(codeDir: File, pkg: String, kotlin: Boolean) {
         if (kotlin) {
             writeKotlin(codeDir, pkg, "ui/home", "HomeViewModel.kt", bottomNavHomeViewModelKt(pkg))
             writeKotlin(codeDir, pkg, "ui/home", "HomeFragment.kt", bottomNavHomeFragmentKt(pkg))
-            writeKotlin(codeDir, pkg, "ui/dashboard", "DashboardViewModel.kt", bottomNavDashboardViewModelKt(pkg))
-            writeKotlin(codeDir, pkg, "ui/dashboard", "DashboardFragment.kt", bottomNavDashboardFragmentKt(pkg))
-            writeKotlin(codeDir, pkg, "ui/notifications", "NotificationsViewModel.kt", bottomNavNotificationsViewModelKt(pkg))
-            writeKotlin(codeDir, pkg, "ui/notifications", "NotificationsFragment.kt", bottomNavNotificationsFragmentKt(pkg))
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/dashboard",
+                "DashboardViewModel.kt",
+                bottomNavDashboardViewModelKt(pkg)
+            )
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/dashboard",
+                "DashboardFragment.kt",
+                bottomNavDashboardFragmentKt(pkg)
+            )
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/notifications",
+                "NotificationsViewModel.kt",
+                bottomNavNotificationsViewModelKt(pkg)
+            )
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/notifications",
+                "NotificationsFragment.kt",
+                bottomNavNotificationsFragmentKt(pkg)
+            )
         } else {
-            writeJava(codeDir, pkg, "ui/home", "HomeViewModel.java", bottomNavHomeViewModelJava(pkg))
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/home",
+                "HomeViewModel.java",
+                bottomNavHomeViewModelJava(pkg)
+            )
             writeJava(codeDir, pkg, "ui/home", "HomeFragment.java", bottomNavHomeFragmentJava(pkg))
-            writeJava(codeDir, pkg, "ui/dashboard", "DashboardViewModel.java", bottomNavDashboardViewModelJava(pkg))
-            writeJava(codeDir, pkg, "ui/dashboard", "DashboardFragment.java", bottomNavDashboardFragmentJava(pkg))
-            writeJava(codeDir, pkg, "ui/notifications", "NotificationsViewModel.java", bottomNavNotificationsViewModelJava(pkg))
-            writeJava(codeDir, pkg, "ui/notifications", "NotificationsFragment.java", bottomNavNotificationsFragmentJava(pkg))
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/dashboard",
+                "DashboardViewModel.java",
+                bottomNavDashboardViewModelJava(pkg)
+            )
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/dashboard",
+                "DashboardFragment.java",
+                bottomNavDashboardFragmentJava(pkg)
+            )
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/notifications",
+                "NotificationsViewModel.java",
+                bottomNavNotificationsViewModelJava(pkg)
+            )
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/notifications",
+                "NotificationsFragment.java",
+                bottomNavNotificationsFragmentJava(pkg)
+            )
         }
     }
 
@@ -862,29 +1009,107 @@ $activityBlock
         if (kotlin) {
             writeKotlin(codeDir, pkg, "ui/home", "HomeViewModel.kt", navDrawerHomeViewModelKt(pkg))
             writeKotlin(codeDir, pkg, "ui/home", "HomeFragment.kt", navDrawerHomeFragmentKt(pkg))
-            writeKotlin(codeDir, pkg, "ui/gallery", "GalleryViewModel.kt", navDrawerGalleryViewModelKt(pkg))
-            writeKotlin(codeDir, pkg, "ui/gallery", "GalleryFragment.kt", navDrawerGalleryFragmentKt(pkg))
-            writeKotlin(codeDir, pkg, "ui/slideshow", "SlideshowViewModel.kt", navDrawerSlideshowViewModelKt(pkg))
-            writeKotlin(codeDir, pkg, "ui/slideshow", "SlideshowFragment.kt", navDrawerSlideshowFragmentKt(pkg))
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/gallery",
+                "GalleryViewModel.kt",
+                navDrawerGalleryViewModelKt(pkg)
+            )
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/gallery",
+                "GalleryFragment.kt",
+                navDrawerGalleryFragmentKt(pkg)
+            )
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/slideshow",
+                "SlideshowViewModel.kt",
+                navDrawerSlideshowViewModelKt(pkg)
+            )
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/slideshow",
+                "SlideshowFragment.kt",
+                navDrawerSlideshowFragmentKt(pkg)
+            )
         } else {
-            writeJava(codeDir, pkg, "ui/home", "HomeViewModel.java", navDrawerHomeViewModelJava(pkg))
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/home",
+                "HomeViewModel.java",
+                navDrawerHomeViewModelJava(pkg)
+            )
             writeJava(codeDir, pkg, "ui/home", "HomeFragment.java", navDrawerHomeFragmentJava(pkg))
-            writeJava(codeDir, pkg, "ui/gallery", "GalleryViewModel.java", navDrawerGalleryViewModelJava(pkg))
-            writeJava(codeDir, pkg, "ui/gallery", "GalleryFragment.java", navDrawerGalleryFragmentJava(pkg))
-            writeJava(codeDir, pkg, "ui/slideshow", "SlideshowViewModel.java", navDrawerSlideshowViewModelJava(pkg))
-            writeJava(codeDir, pkg, "ui/slideshow", "SlideshowFragment.java", navDrawerSlideshowFragmentJava(pkg))
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/gallery",
+                "GalleryViewModel.java",
+                navDrawerGalleryViewModelJava(pkg)
+            )
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/gallery",
+                "GalleryFragment.java",
+                navDrawerGalleryFragmentJava(pkg)
+            )
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/slideshow",
+                "SlideshowViewModel.java",
+                navDrawerSlideshowViewModelJava(pkg)
+            )
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/slideshow",
+                "SlideshowFragment.java",
+                navDrawerSlideshowFragmentJava(pkg)
+            )
         }
     }
 
     private fun writeTabbedSources(codeDir: File, pkg: String, kotlin: Boolean) {
         if (kotlin) {
-            writeKotlin(codeDir, pkg, "ui/main", "SectionsPagerAdapter.kt", tabbedPagerAdapterKt(pkg))
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/main",
+                "SectionsPagerAdapter.kt",
+                tabbedPagerAdapterKt(pkg)
+            )
             writeKotlin(codeDir, pkg, "ui/main", "PageViewModel.kt", tabbedPageViewModelKt(pkg))
-            writeKotlin(codeDir, pkg, "ui/main", "PlaceholderFragment.kt", tabbedPlaceholderFragmentKt(pkg))
+            writeKotlin(
+                codeDir,
+                pkg,
+                "ui/main",
+                "PlaceholderFragment.kt",
+                tabbedPlaceholderFragmentKt(pkg)
+            )
         } else {
-            writeJava(codeDir, pkg, "ui/main", "SectionsPagerAdapter.java", tabbedPagerAdapterJava(pkg))
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/main",
+                "SectionsPagerAdapter.java",
+                tabbedPagerAdapterJava(pkg)
+            )
             writeJava(codeDir, pkg, "ui/main", "PageViewModel.java", tabbedPageViewModelJava(pkg))
-            writeJava(codeDir, pkg, "ui/main", "PlaceholderFragment.java", tabbedPlaceholderFragmentJava(pkg))
+            writeJava(
+                codeDir,
+                pkg,
+                "ui/main",
+                "PlaceholderFragment.java",
+                tabbedPlaceholderFragmentJava(pkg)
+            )
         }
     }
 
@@ -1835,17 +2060,87 @@ public class NotificationsFragment extends Fragment {
 
     private fun navDrawerHomeViewModelKt(pkg: String) = bottomNavHomeViewModelKt(pkg)
     private fun navDrawerHomeViewModelJava(pkg: String) = bottomNavHomeViewModelJava(pkg)
-    private fun navDrawerGalleryViewModelKt(pkg: String) = bottomNavDashboardViewModelKt(pkg).replace("ui.dashboard", "ui.gallery").replace("DashboardViewModel", "GalleryViewModel").replace("dashboard", "gallery")
-    private fun navDrawerGalleryViewModelJava(pkg: String) = bottomNavDashboardViewModelJava(pkg).replace("ui.dashboard", "ui.gallery").replace("DashboardViewModel", "GalleryViewModel").replace("dashboard", "gallery")
-    private fun navDrawerSlideshowViewModelKt(pkg: String) = bottomNavDashboardViewModelKt(pkg).replace("ui.dashboard", "ui.slideshow").replace("DashboardViewModel", "SlideshowViewModel").replace("dashboard", "slideshow")
-    private fun navDrawerSlideshowViewModelJava(pkg: String) = bottomNavDashboardViewModelJava(pkg).replace("ui.dashboard", "ui.slideshow").replace("DashboardViewModel", "SlideshowViewModel").replace("dashboard", "slideshow")
+    private fun navDrawerGalleryViewModelKt(pkg: String) = bottomNavDashboardViewModelKt(
+        pkg
+    ).replace(
+        "ui.dashboard",
+        "ui.gallery"
+    ).replace("DashboardViewModel", "GalleryViewModel").replace("dashboard", "gallery")
+    private fun navDrawerGalleryViewModelJava(pkg: String) = bottomNavDashboardViewModelJava(
+        pkg
+    ).replace(
+        "ui.dashboard",
+        "ui.gallery"
+    ).replace("DashboardViewModel", "GalleryViewModel").replace("dashboard", "gallery")
+    private fun navDrawerSlideshowViewModelKt(pkg: String) = bottomNavDashboardViewModelKt(
+        pkg
+    ).replace(
+        "ui.dashboard",
+        "ui.slideshow"
+    ).replace("DashboardViewModel", "SlideshowViewModel").replace("dashboard", "slideshow")
+    private fun navDrawerSlideshowViewModelJava(pkg: String) = bottomNavDashboardViewModelJava(
+        pkg
+    ).replace(
+        "ui.dashboard",
+        "ui.slideshow"
+    ).replace("DashboardViewModel", "SlideshowViewModel").replace("dashboard", "slideshow")
 
     private fun navDrawerHomeFragmentKt(pkg: String) = bottomNavHomeFragmentKt(pkg)
     private fun navDrawerHomeFragmentJava(pkg: String) = bottomNavHomeFragmentJava(pkg)
-    private fun navDrawerGalleryFragmentKt(pkg: String) = bottomNavDashboardFragmentKt(pkg).replace("ui.dashboard", "ui.gallery").replace("DashboardFragment", "GalleryFragment").replace("FragmentDashboardBinding", "FragmentGalleryBinding").replace("textDashboard", "textGallery").replace("DashboardViewModel", "GalleryViewModel")
-    private fun navDrawerGalleryFragmentJava(pkg: String) = bottomNavDashboardFragmentJava(pkg).replace("ui.dashboard", "ui.gallery").replace("DashboardFragment", "GalleryFragment").replace("FragmentDashboardBinding", "FragmentGalleryBinding").replace("textDashboard", "textGallery").replace("DashboardViewModel", "GalleryViewModel")
-    private fun navDrawerSlideshowFragmentKt(pkg: String) = bottomNavDashboardFragmentKt(pkg).replace("ui.dashboard", "ui.slideshow").replace("DashboardFragment", "SlideshowFragment").replace("FragmentDashboardBinding", "FragmentSlideshowBinding").replace("textDashboard", "textSlideshow").replace("DashboardViewModel", "SlideshowViewModel")
-    private fun navDrawerSlideshowFragmentJava(pkg: String) = bottomNavDashboardFragmentJava(pkg).replace("ui.dashboard", "ui.slideshow").replace("DashboardFragment", "SlideshowFragment").replace("FragmentDashboardBinding", "FragmentSlideshowBinding").replace("textDashboard", "textSlideshow").replace("DashboardViewModel", "SlideshowViewModel")
+    private fun navDrawerGalleryFragmentKt(pkg: String) = bottomNavDashboardFragmentKt(
+        pkg
+    ).replace(
+        "ui.dashboard",
+        "ui.gallery"
+    ).replace(
+        "DashboardFragment",
+        "GalleryFragment"
+    ).replace(
+        "FragmentDashboardBinding",
+        "FragmentGalleryBinding"
+    ).replace("textDashboard", "textGallery").replace("DashboardViewModel", "GalleryViewModel")
+    private fun navDrawerGalleryFragmentJava(pkg: String) = bottomNavDashboardFragmentJava(
+        pkg
+    ).replace(
+        "ui.dashboard",
+        "ui.gallery"
+    ).replace(
+        "DashboardFragment",
+        "GalleryFragment"
+    ).replace(
+        "FragmentDashboardBinding",
+        "FragmentGalleryBinding"
+    ).replace("textDashboard", "textGallery").replace("DashboardViewModel", "GalleryViewModel")
+    private fun navDrawerSlideshowFragmentKt(pkg: String) = bottomNavDashboardFragmentKt(
+        pkg
+    ).replace(
+        "ui.dashboard",
+        "ui.slideshow"
+    ).replace(
+        "DashboardFragment",
+        "SlideshowFragment"
+    ).replace(
+        "FragmentDashboardBinding",
+        "FragmentSlideshowBinding"
+    ).replace(
+        "textDashboard",
+        "textSlideshow"
+    ).replace("DashboardViewModel", "SlideshowViewModel")
+    private fun navDrawerSlideshowFragmentJava(pkg: String) = bottomNavDashboardFragmentJava(
+        pkg
+    ).replace(
+        "ui.dashboard",
+        "ui.slideshow"
+    ).replace(
+        "DashboardFragment",
+        "SlideshowFragment"
+    ).replace(
+        "FragmentDashboardBinding",
+        "FragmentSlideshowBinding"
+    ).replace(
+        "textDashboard",
+        "textSlideshow"
+    ).replace("DashboardViewModel", "SlideshowViewModel")
 
     // ---- tabbed sources ----
 

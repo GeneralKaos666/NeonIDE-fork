@@ -53,7 +53,7 @@ class NeonLspLanguageWrapper(
         // Call original LspLanguage (Maven library) to get LSP completions
         delegate.requireAutoComplete(content, position, publisher, extraArguments)
 
-        // For XML, always call wrapper language (AndroidXmlLanguageEnhancer) 
+        // For XML, always call wrapper language (AndroidXmlLanguageEnhancer)
         // to provide Android-specific resource completions even when LSP is connected.
         if (isXml) {
             wrapperLanguage?.requireAutoComplete(content, position, publisher, extraArguments)
@@ -65,14 +65,14 @@ class NeonLspLanguageWrapper(
                 try {
                     val uri = extraArguments.getString("uri") ?: return@let
                     val prefixLength = extraArguments.getInt("prefixLength", 0)
-                    
+
                     val customItems = manager.fetchCompletionItems(
                         uri,
                         position.line,
                         position.column,
                         prefixLength
                     ).get()
-                    
+
                     if (customItems.isNotEmpty()) {
                         publisher.addItems(customItems)
                     }

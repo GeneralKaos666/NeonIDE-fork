@@ -1,11 +1,12 @@
 package com.neonide.studio.app
 
+import android.app.Activity
 import com.google.android.material.appbar.MaterialToolbar
 import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
 import java.io.File
 
 class EditorGradleManager(
-    private val activity: SoraEditorActivityK,
+    private val activity: Activity,
     private val bottomSheetVm: BottomSheetViewModel
 ) {
     private val gradleController = EditorGradleController(activity, bottomSheetVm)

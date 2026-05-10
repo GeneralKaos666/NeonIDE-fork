@@ -6,11 +6,11 @@ import com.neonide.studio.app.editor.SoraLanguageProvider
 import com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer
 import com.neonide.studio.app.editor.xml.framework.AndroidFrameworkAttrIndex
 import io.github.rosemoe.sora.widget.CodeEditor
+import java.io.File
+import java.net.URI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
-import java.net.URI
 
 class EditorCoordinator(
     private val activity: SoraEditorActivityK,
@@ -30,7 +30,7 @@ class EditorCoordinator(
         val languageForEditor = languageProvider.getLanguage(file)
         editor.setEditorLanguage(languageForEditor)
         val ext = file.extension.lowercase()
-        
+
         if (ext in listOf("java", "kt", "kts", "xml")) {
             runCatching {
                 lspManager.controller.attach(editor, file, languageForEditor, projectRoot)
@@ -38,7 +38,7 @@ class EditorCoordinator(
         } else {
             runCatching { lspManager.controller.detach() }
         }
-        
+
         if (ext == "xml") {
             uiScope.launch(Dispatchers.IO) {
                 if (AndroidFrameworkAttrIndex.ensureLoaded(activity)) {
@@ -49,7 +49,7 @@ class EditorCoordinator(
         } else {
             AndroidXmlLanguageEnhancer.setAndroidFrameworkAttrsProvider(null)
         }
-        
+
         viewHelper.updatePositionText()
         uiManager.updateBtnState(activity.undoItem, activity.redoItem)
     }
@@ -57,22 +57,34 @@ class EditorCoordinator(
     fun navigateTo(uri: String, line: Int, column: Int, projectRoot: File?) {
         val file = if (uri.startsWith("file://")) File(URI.create(uri)) else File(uri)
         if (!file.exists()) {
-            Toast.makeText(activity, "File does not exist: ${file.absolutePath}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                activity,
+                "File does not exist: ${file.absolutePath}",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
         openFileInEditor(file, file.name, projectRoot)
-        editor.post { 
+        editor.post {
             editor.setSelection(line, column)
-            editor.ensurePositionVisible(line, column) 
+            editor.ensurePositionVisible(line, column)
         }
     }
 
     fun saveCurrentFile() {
         val f = activity.currentFile ?: return
         if (fileManager.saveFile(f, editor.text.toString())) {
-            Toast.makeText(activity, activity.getString(R.string.acs_saved), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                activity,
+                activity.getString(R.string.acs_saved),
+                Toast.LENGTH_SHORT
+            ).show()
         } else {
-            Toast.makeText(activity, activity.getString(R.string.acs_save_failed), Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                activity,
+                activity.getString(R.string.acs_save_failed),
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }

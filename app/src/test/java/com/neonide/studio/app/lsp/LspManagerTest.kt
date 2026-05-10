@@ -1,11 +1,11 @@
 package com.neonide.studio.app.lsp
 
-import org.junit.Test
-import org.junit.Assert.*
-import org.eclipse.lsp4j.CompletionParams
-import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.eclipse.lsp4j.Position
 import java.util.concurrent.CompletableFuture
+import org.eclipse.lsp4j.CompletionParams
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.junit.Assert.*
+import org.junit.Test
 
 class LspManagerTest {
     @Test

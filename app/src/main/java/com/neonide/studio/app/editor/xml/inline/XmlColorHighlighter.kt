@@ -37,8 +37,7 @@ object XmlColorHighlighter {
             }
         }
 
-        fun isHex(c: Char): Boolean =
-            (c in '0'..'9') || (c in 'a'..'f') || (c in 'A'..'F')
+        fun isHex(c: Char): Boolean = (c in '0'..'9') || (c in 'a'..'f') || (c in 'A'..'F')
 
         // Reset scan pointers
         i = 0
@@ -124,6 +123,7 @@ object XmlColorHighlighter {
                 val b = hex[2]
                 "#$r$r$g$g$b$b"
             }
+
             4 -> {
                 val a = hex[0]
                 val r = hex[1]
@@ -131,8 +131,11 @@ object XmlColorHighlighter {
                 val b = hex[3]
                 "#$a$a$r$r$g$g$b$b"
             }
+
             6 -> "#$hex"
+
             8 -> "#$hex"
+
             else -> throw IllegalArgumentException("bad length")
         }
         return Color.parseColor(normalized)

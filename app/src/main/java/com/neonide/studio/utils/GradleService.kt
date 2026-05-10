@@ -11,6 +11,8 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.neonide.studio.R
 import com.neonide.studio.app.buildoutput.BuildOutputBuffer
+import java.io.File
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -18,8 +20,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.IOException
 
 /**
  * A foreground service that executes Gradle builds.
@@ -34,10 +34,10 @@ class GradleService : Service() {
     companion object {
         private const val NOTIFICATION_ID = 2001
         private const val CHANNEL_ID = "gradle_build_channel"
-        
+
         const val ACTION_START_BUILD = "com.neonide.studio.ACTION_START_BUILD"
         const val ACTION_STOP_BUILD = "com.neonide.studio.ACTION_STOP_BUILD"
-        
+
         const val EXTRA_PROJECT_DIR = "extra_project_dir"
         const val EXTRA_ARGS = "extra_args"
         const val EXTRA_ACTION_LABEL = "extra_action_label"
@@ -97,12 +97,14 @@ class GradleService : Service() {
                     stopSelf()
                 }
             }
+
             ACTION_STOP_BUILD -> {
                 currentHandle?.cancel()
                 currentJob?.cancel()
                 GradleBuildStatus.isRunning = false
                 stopSelf()
             }
+
             else -> stopSelf()
         }
         return START_NOT_STICKY
@@ -119,25 +121,27 @@ class GradleService : Service() {
         currentJob = serviceScope.launch {
             try {
                 val logFile = logFilePath?.let { File(it) }
-                
+
                 val baseEnv = GradleProjectActions.getGradleEnvironment(this@GradleService)
                 val sdk = AndroidSdkUtils.configureForProject(
                     projectDir = projectDir,
-                    baseEnv = baseEnv,
+                    baseEnv = baseEnv
                 )
 
                 val envOverrides = sdk?.env ?: emptyMap()
                 val finalArgs = if (sdk?.aapt2Path != null) {
                     val override = "-Pandroid.aapt2FromMavenOverride=${sdk.aapt2Path}"
                     args.toMutableList().apply { add(0, override) }
-                } else args
+                } else {
+                    args
+                }
 
                 val handle = withContext(Dispatchers.IO) {
                     GradleRunner.start(
                         context = this@GradleService,
                         projectDir = projectDir,
                         args = finalArgs,
-                        envOverrides = envOverrides,
+                        envOverrides = envOverrides
                     ) { line ->
                         logFile?.appendText(line + "\n")
                         BuildOutputBuffer.appendLine(line)
@@ -151,21 +155,23 @@ class GradleService : Service() {
 
                 if (result.isSuccessful && installOnSuccess) {
                     updateNotification(actionLabel, "Build successful, installing...")
-                    
+
                     val debugApk = File(projectDir, "app/build/outputs/apk/debug/app-debug.apk")
                     val apk = if (debugApk.exists()) {
                         debugApk
                     } else {
                         val apkDir = File(projectDir, "app/build/outputs/apk")
-                        val apks = apkDir.walkTopDown().filter { it.isFile && it.extension == "apk" }.toList()
-                        apks.firstOrNull { it.path.contains("debug", ignoreCase = true) } ?: apks.firstOrNull()
+                        val apks = apkDir.walkTopDown().filter {
+                            it.isFile && it.extension == "apk"
+                        }.toList()
+                        apks.firstOrNull { it.path.contains("debug", ignoreCase = true) }
+                            ?: apks.firstOrNull()
                     }
 
                     if (apk != null) {
                         ApkInstallUtils.installApk(this@GradleService, apk)
                     }
                 }
-                
             } catch (e: IOException) {
                 BuildOutputBuffer.appendLine("ERROR: ${e.message}")
             } finally {
@@ -175,15 +181,14 @@ class GradleService : Service() {
         }
     }
 
-    private fun createNotification(title: String, content: String): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+    private fun createNotification(title: String, content: String): Notification =
+        NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)
             .setSmallIcon(R.drawable.ic_service_notification)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .build()
-    }
 
     private fun updateNotification(title: String, content: String) {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager

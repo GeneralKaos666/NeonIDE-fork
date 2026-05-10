@@ -21,7 +21,7 @@ object GradleDiagnostics {
         "SDK location not found",
         "No matching variant",
         "Android SDK",
-        "Build file",
+        "Build file"
     )
 
     private const val MAX_DIAGNOSTICS = 80
@@ -45,7 +45,10 @@ object GradleDiagnostics {
             .filter { it.isNotBlank() }
             .filter { trimmed ->
                 interestingPrefixes.any { p -> trimmed.startsWith(p, ignoreCase = true) } ||
-                    (trimmed.contains("error", ignoreCase = true) && !trimmed.contains("warning", ignoreCase = true))
+                    (
+                        trimmed.contains("error", ignoreCase = true) &&
+                            !trimmed.contains("warning", ignoreCase = true)
+                        )
             }
             .take(MAX_DIAGNOSTICS)
             .toMutableList()

@@ -5,11 +5,10 @@ fun CharSequence.codePointStringAt(index: Int): String {
     return String(Character.toChars(cp))
 }
 
-fun String.escapeCodePointIfNecessary() =
-    when (this) {
-        "\n" -> "\\n"
-        "\t" -> "\\t"
-        "\r" -> "\\r"
-        " " -> "<ws>"
-        else -> this
-    }
+fun String.escapeCodePointIfNecessary() = when (this) {
+    "\n" -> "\\n"
+    "\t" -> "\\t"
+    "\r" -> "\\r"
+    " " -> "<ws>"
+    else -> this
+}

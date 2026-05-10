@@ -1,11 +1,8 @@
 package com.neonide.studio.app
 
-import android.view.View
-import android.widget.TextView
+import android.app.Activity
 import android.widget.Toast
-import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.neonide.studio.R
 import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
 import com.neonide.studio.app.buildoutput.BuildOutputBuffer
@@ -18,9 +15,10 @@ import java.io.File
  * Controller for handling Gradle build and sync operations.
  */
 class EditorGradleController(
-    private val activity: SoraEditorActivityK,
+    private val activity: Activity,
     private val bottomSheetVm: BottomSheetViewModel
 ) {
+    private val soraActivity = activity as? SoraEditorActivityK
 
     @Volatile var gradleRunning: Boolean = false
         private set
@@ -28,7 +26,7 @@ class EditorGradleController(
     private val gradleStatusListener: (Boolean) -> Unit = { isRunning ->
         gradleRunning = isRunning
         activity.runOnUiThread {
-            activity.updateBtnState()
+            soraActivity?.updateBtnState()
         }
     }
 
@@ -43,7 +41,11 @@ class EditorGradleController(
 
     fun onSyncProject(projectRoot: File?) {
         if (projectRoot == null || !projectRoot.exists()) {
-            Toast.makeText(activity, activity.getString(R.string.acs_project_dir_missing), Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                activity,
+                activity.getString(R.string.acs_project_dir_missing),
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -62,27 +64,35 @@ class EditorGradleController(
             return
         }
 
-        Toast.makeText(activity, activity.getString(R.string.acs_sync_started), Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            activity,
+            activity.getString(R.string.acs_sync_started),
+            Toast.LENGTH_SHORT
+        ).show()
         val plan = GradleProjectActions.createSyncPlan()
         runGradle(
             projectDir = projectRoot,
             args = plan.args,
             actionLabel = activity.getString(R.string.acs_sync_project),
             kind = GradleActionKind.SYNC,
-            installApkOnSuccess = false,
+            installApkOnSuccess = false
         )
     }
 
     fun onQuickRunOrCancel(projectRoot: File?) {
         if (projectRoot == null || !projectRoot.exists()) {
-            Toast.makeText(activity, activity.getString(R.string.acs_project_dir_missing), Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                activity,
+                activity.getString(R.string.acs_project_dir_missing),
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
         if (gradleRunning) {
             GradleService.stopBuild(activity)
             gradleRunning = false
-            activity.updateBtnState()
+            soraActivity?.updateBtnState()
             return
         }
 
@@ -96,7 +106,11 @@ class EditorGradleController(
             return
         }
 
-        Toast.makeText(activity, activity.getString(R.string.acs_build_started), Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            activity,
+            activity.getString(R.string.acs_build_started),
+            Toast.LENGTH_SHORT
+        ).show()
 
         val plan = GradleProjectActions.createQuickRunPlan(projectRoot)
         runGradle(
@@ -104,7 +118,7 @@ class EditorGradleController(
             args = plan.args,
             actionLabel = activity.getString(R.string.acs_quick_run),
             kind = GradleActionKind.BUILD,
-            installApkOnSuccess = true,
+            installApkOnSuccess = true
         )
     }
 
@@ -115,18 +129,14 @@ class EditorGradleController(
         args: List<String>,
         actionLabel: String,
         kind: GradleActionKind,
-        installApkOnSuccess: Boolean,
+        installApkOnSuccess: Boolean
     ) {
         gradleRunning = true
-        activity.invalidateOptionsMenu()
-        activity.updateBtnState()
+        soraActivity?.invalidateOptionsMenu()
+        soraActivity?.updateBtnState()
 
         bottomSheetVm.setStatus("$actionLabel: ${activity.getString(R.string.acs_status_building)}")
-        
-        // Expand bottom sheet using UiManager
-        // We'll add an expandBottomSheet method to EditorUiManager
-        // activity.uiManager.expandBottomSheet()
-        
+
         BuildOutputBuffer.clear()
         bottomSheetVm.setDiagnostics(emptyList())
 

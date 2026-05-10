@@ -25,9 +25,11 @@ object DisplayNameUtils {
             sb.append(
                 when {
                     isControl -> '\uFFFD'
+
                     // Replace any surrogate; even paired surrogates are safe, but some buggy renderers
                     // choke on them. This is conservative.
                     isSurrogate -> '\uFFFD'
+
                     else -> ch
                 }
             )

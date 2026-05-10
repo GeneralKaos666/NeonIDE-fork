@@ -13,7 +13,7 @@ import java.io.File
 class ProjectsListAdapter(
     private var projects: List<File>,
     private val onProjectClick: (File) -> Unit,
-    private val onProjectLongClick: (File) -> Unit,
+    private val onProjectLongClick: (File) -> Unit
 ) : RecyclerView.Adapter<ProjectsListAdapter.ProjectViewHolder>() {
 
     private var filteredProjects: List<File> = projects
@@ -35,7 +35,10 @@ class ProjectsListAdapter(
         holder.projectName.text = DisplayNameUtils.safeForUi(project.name)
         holder.projectPath.text = DisplayNameUtils.safeForUi(project.absolutePath, 260)
 
-        val recentRank = WizardPreferences.getRecentProjectRank(holder.root.context, project.absolutePath)
+        val recentRank = WizardPreferences.getRecentProjectRank(
+            holder.root.context,
+            project.absolutePath
+        )
         val isRecent = recentRank in 0..2 // top 3
         holder.recentBadge.visibility = if (isRecent) View.VISIBLE else View.GONE
 

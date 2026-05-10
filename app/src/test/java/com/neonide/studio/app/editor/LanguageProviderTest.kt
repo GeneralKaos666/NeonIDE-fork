@@ -2,9 +2,9 @@ package com.neonide.studio.app.editor
 
 import io.github.rosemoe.sora.lang.EmptyLanguage
 import io.github.rosemoe.sora.lang.Language
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.io.File
 
 class LanguageProviderTest {
 
@@ -47,7 +47,7 @@ class LanguageProviderTest {
         val result = provider.getLanguage(file)
         assertTrue(result is EmptyLanguage)
     }
-    
+
     private fun assertTrue(condition: Boolean) {
         org.junit.Assert.assertTrue(condition)
     }

@@ -15,9 +15,9 @@ class BottomSheetViewModelTest {
         val viewModel = BottomSheetViewModel()
         val item = NavigationItem("file:///test.java", 10, 5, "Line 10: println(\"hello\")")
         val results = listOf(item)
-        
+
         viewModel.setNavigationResults(results)
-        
+
         assertEquals(results, viewModel.navigationResults.value)
     }
 }
