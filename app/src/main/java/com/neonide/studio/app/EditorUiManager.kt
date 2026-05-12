@@ -10,7 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.android.material.appbar.MaterialToolbar
 import com.neonide.studio.R
-import com.neonide.studio.app.buildoutput.BuildOutputBuffer
+import com.neonide.studio.app.bottomsheet.BuildOutputBuffer
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.component.Magnifier
 import kotlin.jvm.java

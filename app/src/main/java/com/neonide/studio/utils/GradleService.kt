@@ -10,7 +10,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.neonide.studio.R
-import com.neonide.studio.app.buildoutput.BuildOutputBuffer
+import com.neonide.studio.app.bottomsheet.BuildOutputBuffer
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.CoroutineScope

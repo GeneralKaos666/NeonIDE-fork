@@ -1,7 +1,7 @@
 package com.neonide.studio.app
 
 import android.content.Context
-import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
+import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import io.github.rosemoe.sora.widget.CodeEditor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

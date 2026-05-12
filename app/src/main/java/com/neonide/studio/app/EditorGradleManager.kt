@@ -2,7 +2,7 @@ package com.neonide.studio.app
 
 import android.app.Activity
 import com.google.android.material.appbar.MaterialToolbar
-import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
+import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import java.io.File
 
 class EditorGradleManager(

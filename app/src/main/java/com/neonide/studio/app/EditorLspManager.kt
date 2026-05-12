@@ -1,6 +1,6 @@
 package com.neonide.studio.app
 
-import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
+import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import com.neonide.studio.app.lsp.EditorLspControllerFactory
 import io.github.rosemoe.sora.widget.CodeEditor
 import kotlinx.coroutines.CoroutineScope
