@@ -32,7 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.material.appbar.MaterialToolbar
 import com.neonide.studio.R
-import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
+import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import com.neonide.studio.app.editor.SoraLanguageProvider
 import com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer
 import com.neonide.studio.app.editor.xml.inline.XmlColorHighlighter

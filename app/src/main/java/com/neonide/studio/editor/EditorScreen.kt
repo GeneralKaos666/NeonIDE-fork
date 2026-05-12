@@ -39,8 +39,8 @@ import com.neonide.studio.app.EditorGradleManager
 import com.neonide.studio.app.EditorSearchController
 import com.neonide.studio.app.EditorSearchPanel
 import com.neonide.studio.app.EditorViewModel
+import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import com.neonide.studio.app.bottomsheet.EditorBottomSheetContent
-import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
 import com.neonide.studio.utils.OpenFile
 import com.termux.app.TermuxActivity
 import io.github.rosemoe.sora.event.ContentChangeEvent

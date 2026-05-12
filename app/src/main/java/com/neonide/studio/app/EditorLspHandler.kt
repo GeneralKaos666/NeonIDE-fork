@@ -5,8 +5,8 @@ import android.widget.Toast
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.neonide.studio.R
-import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
-import com.neonide.studio.app.bottomsheet.model.NavigationItem
+import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
+import com.neonide.studio.app.bottomsheet.NavigationItem
 import com.neonide.studio.app.lsp.EditorLspController
 import io.github.rosemoe.sora.event.CreateContextMenuEvent
 import io.github.rosemoe.sora.widget.CodeEditor

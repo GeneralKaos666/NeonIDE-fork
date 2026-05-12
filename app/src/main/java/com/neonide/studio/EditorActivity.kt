@@ -16,8 +16,8 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import com.neonide.studio.app.EditorGradleManager
 import com.neonide.studio.app.EditorViewModel
-import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
-import com.neonide.studio.app.buildoutput.BuildOutputBuffer
+import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
+import com.neonide.studio.app.bottomsheet.BuildOutputBuffer
 import com.neonide.studio.app.editor.EditorScreen
 import com.neonide.studio.app.editor.EditorSettingsState
 import com.neonide.studio.app.editor.SoraLanguageProvider
