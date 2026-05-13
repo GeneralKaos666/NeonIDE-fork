@@ -145,7 +145,6 @@ fun EditorScreen(
                         context.startActivity(Intent(context, TermuxActivity::class.java))
                     }
                 },
-                onSwitchLanguage = { EditorDialogs.showLanguageChoice(context, editorState.value) },
                 onSwitchColors = { EditorDialogs.showThemeChoice(context, editorState.value) },
                 onSwitchTypeface = { EditorDialogs.showTypefaceChoice(context, editorState.value) }
             )

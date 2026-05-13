@@ -25,7 +25,7 @@ class EditorMenuHandler(
         R.id.sora_magnifier, R.id.sora_symbol_bar_visibility, R.id.sora_text_wordwrap,
         R.id.sora_editor_line_number, R.id.sora_pin_line_number, R.id.sora_use_icu,
         R.id.sora_completion_anim, R.id.sora_soft_kbd_enabled,
-        R.id.sora_disable_soft_kbd_on_hard_kbd, R.id.sora_switch_language,
+        R.id.sora_disable_soft_kbd_on_hard_kbd,
         R.id.sora_search_panel_st, R.id.sora_search_am, R.id.sora_switch_colors,
         R.id.sora_switch_typeface
     )

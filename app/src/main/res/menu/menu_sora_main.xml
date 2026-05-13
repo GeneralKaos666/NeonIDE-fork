@@ -63,10 +63,6 @@
     </item>
 
     <item
-        android:id="@+id/sora_switch_language"
-        android:title="@string/sora_switch_language" />
-
-    <item
         android:id="@+id/sora_switch_colors"
         android:title="@string/sora_switch_color_scheme" />
 

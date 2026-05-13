@@ -2,7 +2,6 @@ package com.neonide.studio.app;
 
 import android.content.Context;
 import com.termux.app.TermuxApplication;
-
 import com.neonide.studio.logger.IDEFileLogger;
 import com.termux.shared.logger.Logger;
 
