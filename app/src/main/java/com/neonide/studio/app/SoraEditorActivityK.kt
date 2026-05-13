@@ -49,7 +49,6 @@ import io.github.rosemoe.sora.event.SideIconClickEvent
 import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
 import io.github.rosemoe.sora.langs.textmate.TextMateLanguage
 import io.github.rosemoe.sora.langs.textmate.registry.ThemeRegistry
-import io.github.rosemoe.sora.langs.textmate.registry.model.DefaultGrammarDefinition
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.SymbolInputView
 import io.github.rosemoe.sora.widget.component.EditorDiagnosticTooltipWindow
@@ -58,7 +57,6 @@ import java.io.IOException
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.eclipse.tm4e.core.registry.IGrammarSource
 import org.eclipse.tm4e.core.registry.IThemeSource
 
 /**
@@ -180,32 +178,6 @@ class SoraEditorActivityK : AppCompatActivity() {
         }
     }
 
-    private val loadTMLLauncher = registerForActivityResult(GetContent()) { result: Uri? ->
-        try {
-            if (result == null) return@registerForActivityResult
-            contentResolver.openInputStream(result)?.use { stream ->
-                val editorLanguage = editor.editorLanguage
-                val grammarSource = IGrammarSource.fromInputStream(stream, result.path, null)
-                val language = if (editorLanguage is TextMateLanguage) {
-                    editorLanguage.updateLanguage(
-                        DefaultGrammarDefinition.withGrammarSource(grammarSource)
-                    )
-                    editorLanguage
-                } else {
-                    TextMateLanguage.create(
-                        DefaultGrammarDefinition.withGrammarSource(grammarSource),
-                        true
-                    )
-                }
-                editor.setEditorLanguage(language)
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        } catch (e: SecurityException) {
-            e.printStackTrace()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -220,9 +192,7 @@ class SoraEditorActivityK : AppCompatActivity() {
         dialogHelper = EditorDialogHelper(
             this,
             editor,
-            languageProvider,
-            loadTMTLauncher,
-            loadTMLLauncher
+            loadTMTLauncher
         )
 
         projectRoot = savedInstanceState?.getString("project_root_path")?.let { File(it) }

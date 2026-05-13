@@ -4,14 +4,7 @@ import android.app.AlertDialog
 import android.graphics.Typeface
 import androidx.activity.result.ActivityResultLauncher
 import com.neonide.studio.R
-import com.neonide.studio.app.editor.SoraLanguageProvider
-import io.github.rosemoe.sora.lang.EmptyLanguage
-import io.github.rosemoe.sora.langs.java.JavaLanguage
-import io.github.rosemoe.sora.langs.monarch.MonarchColorScheme
-import io.github.rosemoe.sora.langs.monarch.MonarchLanguage
-import io.github.rosemoe.sora.langs.monarch.registry.ThemeRegistry as MonarchThemeRegistry
 import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
-import io.github.rosemoe.sora.langs.textmate.TextMateLanguage
 import io.github.rosemoe.sora.langs.textmate.registry.ThemeRegistry
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
@@ -20,8 +13,6 @@ import io.github.rosemoe.sora.widget.schemes.SchemeEclipse
 import io.github.rosemoe.sora.widget.schemes.SchemeGitHub
 import io.github.rosemoe.sora.widget.schemes.SchemeNotepadXX
 import io.github.rosemoe.sora.widget.schemes.SchemeVS2019
-import io.github.rosemoe.sora.widget.style.LineInfoPanelPosition
-import io.github.rosemoe.sora.widget.style.LineInfoPanelPositionMode
 import java.io.File
 
 /**
@@ -30,9 +21,7 @@ import java.io.File
 class EditorDialogHelper(
     private val activity: SoraEditorActivityK,
     private val editor: CodeEditor,
-    private val languageProvider: SoraLanguageProvider,
-    private val loadTMTLauncher: ActivityResultLauncher<String>,
-    private val loadTMLLauncher: ActivityResultLauncher<String>
+    private val loadTMTLauncher: ActivityResultLauncher<String>
 ) {
 
     fun chooseTypeface() {
@@ -54,110 +43,10 @@ class EditorDialogHelper(
             .show()
     }
 
-    fun chooseLanguage() {
-        val languageOptions = arrayOf(
-            "Java",
-            "TextMate Java",
-            "TextMate Kotlin",
-            "TextMate Python",
-            "TextMate Html",
-            "TextMate JavaScript",
-            "TextMate MarkDown",
-            "TM Language from file",
-            "Tree-sitter Java",
-            "Monarch Java",
-            "Monarch Kotlin",
-            "Monarch Python",
-            "Monarch TypeScript",
-            "Text"
-        )
-
-        val tmLanguages = mapOf(
-            "TextMate Java" to Pair("source.java", "source.java"),
-            "TextMate Kotlin" to Pair("source.kotlin", "source.kotlin"),
-            "TextMate Python" to Pair("source.python", "source.python"),
-            "TextMate Html" to Pair("text.html.basic", "text.html.basic"),
-            "TextMate JavaScript" to Pair("source.js", "source.js"),
-            "TextMate MarkDown" to Pair("text.html.markdown", "text.html.markdown")
-        )
-
-        val monarchLanguages = mapOf(
-            "Monarch Java" to "source.java",
-            "Monarch Kotlin" to "source.kotlin",
-            "Monarch Python" to "source.python",
-            "Monarch TypeScript" to "source.typescript"
-        )
-
-        AlertDialog.Builder(activity)
-            .setTitle(R.string.sora_switch_language)
-            .setSingleChoiceItems(languageOptions, -1) { dialog, which ->
-                when (val selected = languageOptions[which]) {
-                    in tmLanguages -> {
-                        val info = tmLanguages[selected]!!
-                        try {
-                            ensureTextmateTheme()
-                            val editorLanguage = editor.editorLanguage
-                            val language = if (editorLanguage is TextMateLanguage) {
-                                editorLanguage.updateLanguage(info.first)
-                                editorLanguage
-                            } else {
-                                TextMateLanguage.create(info.second, true)
-                            }
-                            editor.setEditorLanguage(language)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-
-                    in monarchLanguages -> {
-                        val info = monarchLanguages[selected]!!
-                        try {
-                            ensureMonarchTheme()
-                            val editorLanguage = editor.editorLanguage
-                            val language = if (editorLanguage is MonarchLanguage) {
-                                editorLanguage.updateLanguage(info)
-                                editorLanguage
-                            } else {
-                                MonarchLanguage.create(info, true)
-                            }
-                            editor.setEditorLanguage(language)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-
-                    else -> {
-                        when (selected) {
-                            "Java" -> editor.setEditorLanguage(JavaLanguage())
-
-                            "Text" -> editor.setEditorLanguage(EmptyLanguage())
-
-                            "TM Language from file" -> loadTMLLauncher.launch("*/*")
-
-                            "Tree-sitter Java" -> {
-                                editor.setEditorLanguage(
-                                    languageProvider.getLanguage(File("dummy.java"))
-                                )
-                            }
-                        }
-                    }
-                }
-                dialog.dismiss()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
     private fun ensureTextmateTheme() {
         val cs = editor.colorScheme
         if (cs !is TextMateColorScheme) {
             editor.colorScheme = TextMateColorScheme.create(ThemeRegistry.getInstance())
-        }
-    }
-
-    private fun ensureMonarchTheme() {
-        if (editor.colorScheme !is MonarchColorScheme) {
-            editor.colorScheme = MonarchColorScheme.create(MonarchThemeRegistry.currentTheme)
         }
     }
 

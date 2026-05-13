@@ -3,8 +3,6 @@ package com.neonide.studio.app.editor
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Typeface
-import io.github.rosemoe.sora.lang.EmptyLanguage
-import io.github.rosemoe.sora.langs.java.JavaLanguage
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
 import io.github.rosemoe.sora.widget.schemes.SchemeDarcula
@@ -28,25 +26,6 @@ object EditorDialogs {
                         editor?.typefaceText =
                             Typeface.createFromAsset(context.assets, assetsPaths[which])
                     }
-                }
-                dialog.dismiss()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    fun showLanguageChoice(context: Context, editor: CodeEditor?) {
-        val languages =
-            arrayOf("Java", "Kotlin", "Python", "C", "C++", "HTML", "JavaScript", "Markdown", "Text")
-
-        AlertDialog.Builder(context)
-            .setTitle("Select Language")
-            .setItems(languages) { dialog, which ->
-                if (editor == null) return@setItems
-                when (languages[which]) {
-                    "Java" -> editor.setEditorLanguage(JavaLanguage())
-                    "Text" -> editor.setEditorLanguage(EmptyLanguage())
-                    // Add other languages as needed
                 }
                 dialog.dismiss()
             }

@@ -47,7 +47,6 @@ fun EditorTopBar(
     onBuildClick: () -> Unit,
     onSyncClick: () -> Unit,
     onTerminalClick: () -> Unit,
-    onSwitchLanguage: () -> Unit,
     onSwitchColors: () -> Unit,
     onSwitchTypeface: () -> Unit
 ) {
@@ -186,13 +185,6 @@ fun EditorTopBar(
                 HorizontalDivider()
 
                 MenuCategoryTitle("Configuration")
-                DropdownMenuItem(
-                    text = { Text("Switch Language") },
-                    onClick = {
-                        onSwitchLanguage()
-                        expanded = false
-                    }
-                )
                 DropdownMenuItem(
                     text = { Text("Switch Color Scheme") },
                     onClick = {
