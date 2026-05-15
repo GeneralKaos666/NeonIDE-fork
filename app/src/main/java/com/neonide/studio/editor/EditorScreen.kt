@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.neonide.studio.app.EditorGradleManager
 import com.neonide.studio.app.EditorSearchController
 import com.neonide.studio.app.EditorSearchPanel
+import com.neonide.studio.app.EditorThemeAndLanguageManager
 import com.neonide.studio.app.EditorViewModel
 import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import com.neonide.studio.app.bottomsheet.EditorBottomSheetContent
@@ -103,7 +105,7 @@ fun EditorScreen(
 
     LaunchedEffect(editorState.value) {
         val editor = editorState.value ?: return@LaunchedEffect
-        val tm = com.neonide.studio.app.EditorThemeAndLanguageManager(editor)
+        val tm = EditorThemeAndLanguageManager(editor)
         tm.setupTextmate()
         tm.setupMonarch()
         if (editor.colorScheme !is TextMateColorScheme) {
@@ -144,6 +146,7 @@ fun EditorScreen(
     BottomSheetScaffold(
         modifier = Modifier,
         scaffoldState = scaffoldState,
+        sheetShape = RectangleShape,
         sheetContent = { EditorBottomSheetContent(viewModel = bottomSheetVm) },
         sheetPeekHeight = peekHeight,
         topBar = {
