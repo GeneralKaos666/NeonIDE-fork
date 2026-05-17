@@ -1,4 +1,4 @@
-package com.neonide.studio.app.editor
+package com.neonide.studio.editor
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -110,7 +110,7 @@ fun EditorSearchPanel(state: EditorSearchState) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(40.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End
         ) {

@@ -1,4 +1,4 @@
-package com.neonide.studio.app.editor
+package com.neonide.studio.editor
 
 import android.content.Intent
 import android.view.ViewGroup
@@ -36,6 +36,7 @@ import com.neonide.studio.app.EditorGradleManager
 import com.neonide.studio.app.EditorViewModel
 import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import com.neonide.studio.app.bottomsheet.EditorBottomSheetContent
+import com.neonide.studio.app.editor.SoraLanguageProvider
 import com.neonide.studio.app.editor.completion.UnifiedCompletionProvider
 import com.neonide.studio.utils.OpenFile
 import com.termux.app.TermuxActivity
