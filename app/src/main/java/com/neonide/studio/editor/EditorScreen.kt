@@ -10,7 +10,6 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,8 +17,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
@@ -45,7 +46,6 @@ import com.neonide.studio.app.bottomsheet.BottomSheetTab
 import com.neonide.studio.app.bottomsheet.BottomSheetTabRow
 import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import com.neonide.studio.app.bottomsheet.EditorBottomSheetContent
-import androidx.compose.foundation.pager.rememberPagerState
 import com.neonide.studio.app.editor.SoraLanguageProvider
 import com.neonide.studio.app.editor.completion.UnifiedCompletionProvider
 import com.neonide.studio.utils.OpenFile
@@ -155,9 +155,14 @@ fun EditorScreen(
             Column(
                 modifier = Modifier.draggable(
                     state = rememberDraggableState { delta ->
-                        if (delta > 0 && scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) {
+                        if (delta > 0 &&
+                            scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
+                        ) {
                             scope.launch { scaffoldState.bottomSheetState.partialExpand() }
-                        } else if (delta < 0 && scaffoldState.bottomSheetState.currentValue == SheetValue.PartiallyExpanded) {
+                        } else if (delta < 0 &&
+                            scaffoldState.bottomSheetState.currentValue ==
+                            SheetValue.PartiallyExpanded
+                        ) {
                             scope.launch { scaffoldState.bottomSheetState.expand() }
                         }
                     },
@@ -171,7 +176,9 @@ fun EditorScreen(
                 BottomSheetTabRow(pagerState = pagerState, tabs = tabs)
             }
         },
-        sheetContent = { EditorBottomSheetContent(viewModel = bottomSheetVm, pagerState = pagerState) },
+        sheetContent = {
+            EditorBottomSheetContent(viewModel = bottomSheetVm, pagerState = pagerState)
+        },
         sheetPeekHeight = peekHeight,
         topBar = {
             EditorTopBar(

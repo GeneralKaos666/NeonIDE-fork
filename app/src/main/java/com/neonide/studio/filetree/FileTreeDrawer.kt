@@ -66,8 +66,7 @@ fun FileTreeDrawer(rootPath: String, onFileClick: (String) -> Unit) {
             nodeNameTextStyle = base.nodeNameTextStyle.copy(
                 fontSize = 12.sp * uiScale
             ),
-            // Disable internal horizontal scroll to prevent it from swallowing pinch gestures
-            useHorizontalScroll = false
+            useHorizontalScroll = true
         )
     }
 
@@ -183,14 +182,15 @@ fun FileTreeDrawer(rootPath: String, onFileClick: (String) -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                // Use Initial pass to catch pinch before LazyColumn consumes it for scrolling
                 .pointerInput(Unit) {
                     awaitEachGesture {
                         do {
                             val event = awaitPointerEvent(PointerEventPass.Initial)
-                            val zoomChange = event.calculateZoom()
-                            if (zoomChange != 1f) {
-                                uiScale = (uiScale * zoomChange).coerceIn(0.7f, 2.5f)
+                            if (event.changes.size >= 2) {
+                                val zoomChange = event.calculateZoom()
+                                if (zoomChange != 1f) {
+                                    uiScale = (uiScale * zoomChange).coerceIn(0.7f, 2.5f)
+                                }
                             }
                         } while (event.changes.any { it.pressed })
                     }
