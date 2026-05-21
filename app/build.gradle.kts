@@ -108,7 +108,7 @@ android {
     }
     androidComponents {
         onVariants(selector().all()) { variant ->
-            val appname = "NeonIDE-${variant.outputs.first().versionName.get()}-${variant.buildType}.apk"
+            val appname = "NeonIDE-v${variant.outputs.first().versionName.get()}-${variant.buildType}.apk"
             variant.outputs.forEach { output ->
                 output.outputFileName.set(appname)
             }
