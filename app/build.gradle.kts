@@ -12,12 +12,21 @@ android {
     compileSdk = 36
     ndkVersion = "29.0.14033849"
 
+    applicationVariants.all {
+        val variant = this
+        val appname = "NeonIDE-${variant.versionName}-${variant.buildType.name}.apk"
+        outputs.all {
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
+                .outputFileName = appname
+        }
+    }
+
     defaultConfig {
         applicationId = "com.neonide.studio"
         minSdk = 23
         targetSdk = 28
         versionCode = 1
-        versionName = "0.1"
+        versionName = "v0.0.1"
 
         manifestPlaceholders += mapOf(
             "TERMUX_PACKAGE_NAME" to "com.neonide.studio",
