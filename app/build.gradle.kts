@@ -12,15 +12,6 @@ android {
     compileSdk = 36
     ndkVersion = "29.0.14033849"
 
-    applicationVariants.all {
-        val variant = this
-        val appname = "NeonIDE-${variant.versionName}-${variant.buildType.name}.apk"
-        outputs.all {
-            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
-                .outputFileName = appname
-        }
-    }
-
     defaultConfig {
         applicationId = "com.neonide.studio"
         minSdk = 23
@@ -113,6 +104,14 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
+        }
+    }
+    androidComponents {
+        onVariants(selector().all()) { variant ->
+            val appname = "NeonIDE-${variant.outputs.first().versionName.get()}-${variant.buildType}.apk"
+            variant.outputs.forEach { output ->
+                output.outputFileName.set(appname)
+            }
         }
     }
 }
