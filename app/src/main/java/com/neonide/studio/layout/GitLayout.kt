@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -43,11 +42,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.neonide.studio.EditorActivity
-
+import com.neonide.studio.utils.divider.horizontalDivider
 @Composable
 fun GitLayout(
     onBack: () -> Unit,
@@ -187,7 +187,7 @@ fun GitLayout(
                 }
             }
 
-            HorizontalDivider()
+            horizontalDivider(color = Color.Gray)
 
             // ---- Shallow clone ----
             Row(verticalAlignment = Alignment.CenterVertically) {
