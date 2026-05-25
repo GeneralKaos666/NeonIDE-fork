@@ -16,7 +16,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,11 +27,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.neonide.studio.utils.divider.horizontalDivider
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.component.EditorAutoCompletion
 import io.github.rosemoe.sora.widget.component.Magnifier
-
 @Composable
 fun EditorTopBar(
     settings: EditorSettingsState,
@@ -90,7 +90,7 @@ fun EditorTopBar(
                     }
                 )
 
-                HorizontalDivider()
+                horizontalDivider(color = Color.Gray)
 
                 MenuCategoryTitle("Feature Switches")
                 DropdownMenuItem(
@@ -182,7 +182,7 @@ fun EditorTopBar(
                     }
                 )
 
-                HorizontalDivider()
+                horizontalDivider(color = Color.Gray)
 
                 MenuCategoryTitle("Configuration")
                 DropdownMenuItem(

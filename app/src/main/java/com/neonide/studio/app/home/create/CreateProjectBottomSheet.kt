@@ -296,7 +296,7 @@ fun CreateProjectBottomSheet(onDismiss: () -> Unit) {
                         options = listOf("Kotlin", "Java"),
                         selectedOption = language,
                         onOptionSelected = { language = it },
-                        leadingIconRes = R.drawable.ic_language_kotlin
+                        leadingIconRes = R.drawable.ic_filetype_kotlin
                     )
 
                     DropdownField(
@@ -304,7 +304,7 @@ fun CreateProjectBottomSheet(onDismiss: () -> Unit) {
                         options = listOf("21", "24", "26", "28", "29", "30", "33"),
                         selectedOption = minSdk,
                         onOptionSelected = { minSdk = it },
-                        leadingIconRes = R.drawable.ic_gradle
+                        leadingIconRes = R.drawable.ic_filetype_gradle
                     )
 
                     Row(

@@ -1,18 +1,18 @@
 package com.neonide.studio.filetree
 
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -23,258 +23,409 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.times
 import cafe.adriel.bonsai.core.Bonsai
+import cafe.adriel.bonsai.core.BonsaiStyle
 import cafe.adriel.bonsai.core.node.BranchNode
-import cafe.adriel.bonsai.core.node.Node
-import cafe.adriel.bonsai.filesystem.FileSystemBonsaiStyle
-import cafe.adriel.bonsai.filesystem.FileSystemTree
+import com.neonide.studio.R
+import com.neonide.studio.app.utils.SafeFileDeleter
 import com.neonide.studio.utils.ApkInstallUtils
+import com.neonide.studio.utils.divider.horizontalDivider
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okio.FileSystem
+import okio.Path
 import okio.Path.Companion.toPath
 
 @Composable
 fun FileTreeDrawer(rootPath: String, onFileClick: (String) -> Unit) {
     val context = LocalContext.current
-    val rootPathState = remember(rootPath) { rootPath.toPath() }
+    val rootPathOkio = remember(rootPath) { rootPath.toPath() }
     var refreshTrigger by remember { mutableStateOf(0) }
+    var uiScale by remember { mutableStateOf(1.5f) }
+    var searchQuery by remember { mutableStateOf("") }
+    var searchOpen by remember { mutableStateOf(false) }
+    var clipboard by remember { mutableStateOf<ClipboardEntry?>(null) }
+    var contextTarget by remember { mutableStateOf<ContextMenuTarget?>(null) }
+    var contextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
+    var inlineMode by remember { mutableStateOf<InlineMode>(InlineMode.None) }
+    var inlineText by remember { mutableStateOf("") }
+    var inlineError by remember { mutableStateOf<String?>(null) }
+    var deleteTarget by remember { mutableStateOf<ContextMenuTarget?>(null) }
+    var isCompactMode by remember { mutableStateOf(true) }
+    var searchRegex by remember { mutableStateOf(false) }
+    var searchCaseSensitive by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
+    val lastTouch = remember { intArrayOf(0, 0) }
 
-    // --- Zoom State ---
-    var uiScale by remember { mutableStateOf(1f) }
-
-    // Create a scaled style
-    val scaledStyle = remember(uiScale) {
-        val base = FileSystemBonsaiStyle()
-        base.copy(
-            toggleIconSize = 16.dp * uiScale,
-            nodeIconSize = 24.dp * uiScale,
-            nodeNameStartPadding = 4.dp * uiScale,
-            nodePadding = PaddingValues(
-                horizontal = 8.dp * uiScale, // Slightly more horizontal padding for easier clicking
-                vertical = 2.dp * uiScale
-            ),
-            nodeNameTextStyle = base.nodeNameTextStyle.copy(
-                fontSize = 12.sp * uiScale
-            ),
-            useHorizontalScroll = true
-        )
-    }
-
-    val tree = FileSystemTree(
-        rootPath = rootPathState,
+    val tree = CompactFileSystemTree(
+        rootPath = rootPathOkio,
         fileSystem = FileSystem.SYSTEM,
         selfInclude = true,
-        refreshTrigger = refreshTrigger
+        refreshTrigger = refreshTrigger,
+        uiScale = uiScale,
+        compactMode = isCompactMode
     )
 
-    var nodeToAct by remember { mutableStateOf<Node<okio.Path>?>(null) }
-    var actionDialog by remember { mutableStateOf<String?>(null) }
-    var newName by remember { mutableStateOf("") }
-
-    val dirLastModified = remember(rootPath) { mutableMapOf<String, Long>() }
-    val dirSnapshots = remember(rootPath) { mutableMapOf<String, String>() }
-
-    LaunchedEffect(tree) {
+    LaunchedEffect(rootPathOkio) {
         tree.expandRoot()
     }
 
-    // Polling-based auto-refresh
-    LaunchedEffect(rootPath, tree) {
+    val dirSnapshots = remember(rootPath) { mutableMapOf<String, DirSnapshot>() }
+
+    LaunchedEffect(rootPathOkio, refreshTrigger) {
         while (true) {
             delay(1500)
             val isDirty = withContext(Dispatchers.IO) {
                 var dirty = false
-                val currentNodes = tree.nodes.toList()
-                for (node in currentNodes) {
+                for (node in tree.nodes) {
                     if (node is BranchNode<*> && node.isExpanded) {
                         val file = File(node.content.toString())
-                        if (file.exists() && file.isDirectory) {
+                        if (file.isDirectory) {
                             val lastMod = file.lastModified()
-                            val cachedMod = dirLastModified[file.absolutePath] ?: 0L
-                            if (lastMod != cachedMod) {
-                                val files = file.listFiles()
-                                val snapshot = files?.sortedBy { it.name }?.joinToString {
-                                    "${it.name}:${it.isDirectory}"
-                                } ?: ""
-                                val cachedSnapshot = dirSnapshots[file.absolutePath] ?: ""
-                                if (snapshot != cachedSnapshot) {
-                                    dirSnapshots[file.absolutePath] = snapshot
+                            val cached = dirSnapshots[file.absolutePath]
+                            if (cached == null || cached.lastModified != lastMod) {
+                                val snapshot = file.listFiles()
+                                    ?.sortedBy { it.name }
+                                    ?.joinToString { "${it.name}:${it.isDirectory}" } ?: ""
+                                if (cached == null || cached.listing != snapshot) {
+                                    dirSnapshots[file.absolutePath] = DirSnapshot(lastMod, snapshot)
                                     dirty = true
                                 }
-                                dirLastModified[file.absolutePath] = lastMod
                             }
                         }
                     }
                 }
                 dirty
             }
-            if (isDirty) {
-                refreshTrigger++
-            }
+            if (isDirty) refreshTrigger++
         }
     }
 
-    // Dialogs
-    if (actionDialog == "actions" && nodeToAct != null) {
-        val file = File(nodeToAct!!.content.toString())
-        AlertDialog(
-            onDismissRequest = { actionDialog = null },
-            title = { Text("Options") },
-            text = {
-                Column {
-                    TextButton(onClick = {
-                        newName = file.name
-                        actionDialog = "rename"
-                    }) { Text("Rename") }
-                    TextButton(onClick = {
-                        actionDialog = "delete"
-                    }) { Text("Delete") }
+    val selectedBg = MaterialTheme.colorScheme.primaryContainer
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val scaledStyle = remember(uiScale, selectedBg, onSurface) {
+        BonsaiStyle<Path>(
+            nodeCollapsedIcon = { null },
+            nodeExpandedIcon = { null },
+            nodeSelectedBackgroundColor = selectedBg,
+            nodeNameTextStyle = TextStyle(fontSize = 12.sp * uiScale, color = onSurface),
+            nodeNameStartPadding = 4.dp * uiScale,
+            toggleIcon = { node ->
+                if (node is BranchNode) {
+                    painterResource(
+                        if (node.isExpanded) {
+                            R.drawable.ic_chevron_down
+                        } else {
+                            R.drawable.ic_chevron_right
+                        }
+                    )
+                } else {
+                    null
                 }
             },
-            confirmButton = {}
-        )
-    }
-
-    if (actionDialog == "rename") {
-        RenameDialog(
-            newName = newName,
-            onNameChange = { newName = it },
-            onRename = {
-                val oldFile = File(nodeToAct!!.content.toString())
-                val newFile = File(oldFile.parent, newName)
-                if (oldFile.renameTo(newFile)) {
-                    refreshTrigger++
-                }
-                actionDialog = null
-                nodeToAct = null
-            },
-            onDismiss = { actionDialog = null }
-        )
-    }
-
-    if (actionDialog == "delete") {
-        DeleteDialog(
-            text = "Delete '${File(nodeToAct!!.content.toString()).name}'?",
-            onDelete = {
-                if (File(nodeToAct!!.content.toString()).deleteRecursively()) {
-                    refreshTrigger++
-                }
-                actionDialog = null
-                nodeToAct = null
-            },
-            onDismiss = { actionDialog = null }
+            toggleIconSize = 16.dp * uiScale,
+            toggleIconRotationDegrees = 0f,
+            useHorizontalScroll = true
         )
     }
 
     ModalDrawerSheet(
+        drawerShape = RectangleShape,
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        do {
-                            val event = awaitPointerEvent(PointerEventPass.Initial)
-                            if (event.changes.size >= 2) {
-                                val zoomChange = event.calculateZoom()
-                                if (zoomChange != 1f) {
-                                    uiScale = (uiScale * zoomChange).coerceIn(0.7f, 2.5f)
-                                }
-                            }
-                        } while (event.changes.any { it.pressed })
-                    }
-                }
-        ) {
-            Bonsai(
-                tree = tree,
-                style = scaledStyle,
-                modifier = Modifier.fillMaxSize(),
-                onClick = { node ->
-                    val file = File(node.content.toString())
-                    if (file.isFile) {
-                        if (file.extension.equals("apk", ignoreCase = true)) {
-                            ApkInstallUtils.installApk(context, file)
-                        }
-                        onFileClick(file.absolutePath)
-                    } else {
-                        tree.toggleExpansion(node)
-                    }
+        Column(modifier = Modifier.fillMaxSize()) {
+            FileTreeToolbar(
+                onCollapseAll = { tree.collapseAll() },
+                onExpandAll = { tree.expandAll() },
+                onToggleSearch = {
+                    searchOpen = !searchOpen
+                    if (!searchOpen) searchQuery = ""
                 },
-                onLongClick = { node ->
-                    nodeToAct = node
-                    actionDialog = "actions"
-                }
+                isCompactMode = isCompactMode,
+                onToggleCompact = { isCompactMode = !isCompactMode },
+                searchRegex = searchRegex,
+                onToggleRegex = { searchRegex = !searchRegex },
+                searchCaseSensitive = searchCaseSensitive,
+                onToggleCaseSensitive = { searchCaseSensitive = !searchCaseSensitive },
+                menuExpanded = menuExpanded,
+                onToggleMenu = { menuExpanded = !menuExpanded },
+                onDismissMenu = { menuExpanded = false },
+                searchOpen = searchOpen,
+                searchQuery = searchQuery,
+                onQueryChange = { searchQuery = it }
             )
 
-            if (uiScale != 1f) {
-                Text(
-                    text = "${(uiScale * 100).toInt()}%",
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp),
-                    color = Color.Gray,
-                    fontSize = 10.sp
-                )
+            horizontalDivider()
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .pointerInput(Unit) {
+                        awaitEachGesture {
+                            do {
+                                val event = awaitPointerEvent(PointerEventPass.Initial)
+                                event.changes.firstOrNull()?.let {
+                                    lastTouch[0] = it.position.x.toInt()
+                                    lastTouch[1] = it.position.y.toInt()
+                                }
+                                if (event.changes.size >= 2) {
+                                    val zoomChange = event.calculateZoom()
+                                    if (zoomChange != 1f) {
+                                        uiScale = (uiScale * zoomChange).coerceIn(0.7f, 2.5f)
+                                    }
+                                }
+                            } while (event.changes.any { it.pressed })
+                        }
+                    }
+            ) {
+                if (searchQuery.isNotEmpty()) {
+                    SearchResultsList(
+                        rootPath = rootPathOkio,
+                        query = searchQuery,
+                        uiScale = uiScale,
+                        useRegex = searchRegex,
+                        caseSensitive = searchCaseSensitive,
+                        onFileClick = { path -> onFileClick(path) },
+                        onFolderLongClick = { path, name ->
+                            contextTarget = ContextMenuTarget(path, name, true)
+                        },
+                        onFileLongClick = { path, name ->
+                            contextTarget = ContextMenuTarget(path, name, false)
+                        }
+                    )
+                } else {
+                    Bonsai(
+                        tree = tree,
+                        style = scaledStyle,
+                        modifier = Modifier.fillMaxSize(),
+                        onClick = { node ->
+                            val file = File(node.content.toString())
+                            if (file.isFile) {
+                                if (file.extension.equals("apk", ignoreCase = true)) {
+                                    ApkInstallUtils.installApk(context, file)
+                                }
+                                onFileClick(file.absolutePath)
+                            } else {
+                                tree.toggleExpansion(node)
+                            }
+                        },
+                        onLongClick = { node ->
+                            tree.clearSelection()
+                            tree.selectNode(node)
+                            val file = File(node.content.toString())
+                            contextTarget = ContextMenuTarget(
+                                path = node.content,
+                                name = file.name,
+                                isDirectory = file.isDirectory
+                            )
+                            contextMenuOffset = IntOffset(lastTouch[0], lastTouch[1])
+                        }
+                    )
+                }
+
+                if (uiScale != 1f) {
+                    Text(
+                        text = "${(uiScale * 100).toInt()}%",
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp),
+                        color = MaterialTheme.colorScheme.outline,
+                        fontSize = 10.sp
+                    )
+                }
             }
+
+            ClipboardIndicatorBar(
+                clipboard = clipboard,
+                onClear = { clipboard = null }
+            )
         }
+    }
+
+    FileTreeContextMenu(
+        target = contextTarget,
+        clipboard = clipboard,
+        offset = contextMenuOffset,
+        onDismiss = {
+            contextTarget = null
+            tree.clearSelection()
+        },
+        onNewFile = {
+            val parentPath = if (it.isDirectory) it.path else (it.path.parent ?: it.path)
+            inlineMode = InlineMode.NewFile(parentPath)
+            inlineText = ""
+            inlineError = null
+        },
+        onNewDirectory = {
+            val parentPath = if (it.isDirectory) it.path else (it.path.parent ?: it.path)
+            inlineMode = InlineMode.NewDirectory(parentPath)
+            inlineText = ""
+            inlineError = null
+        },
+        onCut = {
+            clipboard = ClipboardEntry(it.path, it.name, it.isDirectory, ClipboardMode.CUT)
+        },
+        onCopy = {
+            clipboard = ClipboardEntry(it.path, it.name, it.isDirectory, ClipboardMode.COPY)
+        },
+        onPaste = {
+            val clip = clipboard ?: return@FileTreeContextMenu
+            val targetDir = if (it.isDirectory) it.path else (it.path.parent ?: it.path)
+            performPaste(clip, targetDir)
+            clipboard = null
+            refreshTrigger++
+        },
+        onRename = {
+            inlineMode = InlineMode.Rename(it.path)
+            inlineText = it.name
+            inlineError = null
+        },
+        onDelete = {
+            deleteTarget = it
+        },
+        onCopyPath = {}
+    )
+
+    when (val mode = inlineMode) {
+        is InlineMode.NewFile -> {
+            InlineInputDialog(
+                title = "New File",
+                value = inlineText,
+                onValueChange = {
+                    inlineText = it
+                    inlineError = null
+                },
+                errorMessage = inlineError,
+                onConfirm = {
+                    if (inlineText.isNotEmpty()) {
+                        val file = File(mode.parentPath.toString(), inlineText)
+                        if (file.exists()) {
+                            inlineError = "file or folder already exists"
+                        } else {
+                            file.parentFile?.mkdirs()
+                            file.createNewFile()
+                            refreshTrigger++
+                            inlineMode = InlineMode.None
+                        }
+                    }
+                },
+                onDismiss = {
+                    inlineMode = InlineMode.None
+                    inlineError = null
+                }
+            )
+        }
+
+        is InlineMode.NewDirectory -> {
+            InlineInputDialog(
+                title = "New Directory",
+                value = inlineText,
+                onValueChange = {
+                    inlineText = it
+                    inlineError = null
+                },
+                errorMessage = inlineError,
+                onConfirm = {
+                    if (inlineText.isNotEmpty()) {
+                        val file = File(mode.parentPath.toString(), inlineText)
+                        if (file.exists()) {
+                            inlineError = "file or folder already exists"
+                        } else {
+                            file.mkdirs()
+                            refreshTrigger++
+                            inlineMode = InlineMode.None
+                        }
+                    }
+                },
+                onDismiss = {
+                    inlineMode = InlineMode.None
+                    inlineError = null
+                }
+            )
+        }
+
+        is InlineMode.Rename -> {
+            InlineInputDialog(
+                title = "Rename",
+                value = inlineText,
+                onValueChange = {
+                    inlineText = it
+                    inlineError = null
+                },
+                errorMessage = inlineError,
+                onConfirm = {
+                    if (inlineText.isNotEmpty()) {
+                        val oldFile = File(mode.path.toString())
+                        val newFile = File(oldFile.parent, inlineText)
+                        if (newFile.exists()) {
+                            inlineError = "file or folder already exists"
+                        } else {
+                            if (oldFile.renameTo(newFile)) refreshTrigger++
+                            inlineMode = InlineMode.None
+                        }
+                    }
+                },
+                onDismiss = {
+                    inlineMode = InlineMode.None
+                    inlineError = null
+                }
+            )
+        }
+
+        InlineMode.None -> {}
+    }
+
+    if (deleteTarget != null) {
+        val target = deleteTarget!!
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            text = { Text("Delete '${target.name}'?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    SafeFileDeleter.deleteRecursively(File(target.path.toString()))
+                    refreshTrigger++
+                    deleteTarget = null
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) { Text("Cancel") }
+            }
+        )
     }
 }
 
-@Composable
-fun RenameDialog(
-    newName: String,
-    onNameChange: (String) -> Unit,
-    onRename: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {},
-        text = {
-            OutlinedTextField(
-                value = newName,
-                onValueChange = onNameChange
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onRename) {
-                Text("Rename")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
+private data class DirSnapshot(val lastModified: Long, val listing: String)
+
+internal sealed interface InlineMode {
+    data object None : InlineMode
+    data class NewFile(val parentPath: Path) : InlineMode
+    data class NewDirectory(val parentPath: Path) : InlineMode
+    data class Rename(val path: Path) : InlineMode
 }
 
-@Composable
-fun DeleteDialog(text: String, onDelete: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        text = { Text(text) },
-        title = {},
-        confirmButton = {
-            TextButton(onClick = onDelete) {
-                Text("Delete")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+private fun performPaste(clip: ClipboardEntry, targetDir: Path) {
+    val source = File(clip.path.toString())
+    val dest = File(targetDir.toString(), clip.name)
+    when (clip.mode) {
+        ClipboardMode.CUT -> source.renameTo(dest)
+
+        ClipboardMode.COPY -> {
+            if (source.isDirectory) {
+                source.copyRecursively(dest)
+            } else {
+                source.copyTo(dest, overwrite = false)
             }
         }
-    )
+    }
 }
