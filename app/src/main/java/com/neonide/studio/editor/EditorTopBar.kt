@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -43,6 +44,7 @@ fun EditorTopBar(
     onUndoClick: () -> Unit,
     onRedoClick: () -> Unit,
     onSaveClick: () -> Unit,
+    isGradleRunning: Boolean = false,
     onBuildClick: () -> Unit,
     onSyncClick: () -> Unit,
     onTerminalClick: () -> Unit,
@@ -61,7 +63,13 @@ fun EditorTopBar(
             IconButton(onClick = onUndoClick) { Icon(Icons.AutoMirrored.Filled.Undo, "Undo") }
             IconButton(onClick = onRedoClick) { Icon(Icons.AutoMirrored.Filled.Redo, "Redo") }
             IconButton(onClick = onSaveClick) { Icon(Icons.Filled.Save, "Save") }
-            IconButton(onClick = onBuildClick) { Icon(Icons.Filled.PlayArrow, "Build/Run") }
+            IconButton(onClick = onBuildClick) {
+                if (isGradleRunning) {
+                    Icon(Icons.Filled.Stop, "Cancel")
+                } else {
+                    Icon(Icons.Filled.PlayArrow, "Build/Run")
+                }
+            }
             IconButton(onClick = onSyncClick) { Icon(Icons.Filled.Refresh, "Sync") }
             IconButton(onClick = onTerminalClick) { Icon(Icons.Filled.Terminal, "Terminal") }
             IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, "More") }

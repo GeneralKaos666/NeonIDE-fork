@@ -33,16 +33,7 @@ class EditorGradleController(
         GradleBuildStatus.removeListener(gradleStatusListener)
     }
 
-    fun onSyncProject(projectRoot: File?) {
-        if (projectRoot == null || !projectRoot.exists()) {
-            Toast.makeText(
-                activity,
-                activity.getString(R.string.project_dir_missing),
-                Toast.LENGTH_LONG
-            ).show()
-            return
-        }
-
+    fun onSyncProject(projectRoot: File) {
         if (gradleRunning) {
             GradleService.stopBuild(activity)
             return
@@ -58,21 +49,11 @@ class EditorGradleController(
             projectDir = projectRoot,
             args = plan.args,
             actionLabel = activity.getString(R.string.sync_project),
-            kind = GradleActionKind.SYNC,
             installApkOnSuccess = false
         )
     }
 
-    fun onQuickRunOrCancel(projectRoot: File?) {
-        if (projectRoot == null || !projectRoot.exists()) {
-            Toast.makeText(
-                activity,
-                activity.getString(R.string.project_dir_missing),
-                Toast.LENGTH_LONG
-            ).show()
-            return
-        }
-
+    fun onQuickRunOrCancel(projectRoot: File) {
         if (gradleRunning) {
             GradleService.stopBuild(activity)
             gradleRunning = false
@@ -90,18 +71,14 @@ class EditorGradleController(
             projectDir = projectRoot,
             args = plan.args,
             actionLabel = activity.getString(R.string.quick_run),
-            kind = GradleActionKind.BUILD,
             installApkOnSuccess = true
         )
     }
-
-    private enum class GradleActionKind { BUILD, SYNC }
 
     private fun runGradle(
         projectDir: File,
         args: List<String>,
         actionLabel: String,
-        kind: GradleActionKind,
         installApkOnSuccess: Boolean
     ) {
         gradleRunning = true
