@@ -10,11 +10,11 @@ class EditorGradleManager(
 ) {
     private val gradleController = EditorGradleController(activity, bottomSheetVm)
 
-    fun onQuickRunOrCancel(projectRoot: File?) {
+    fun onQuickRunOrCancel(projectRoot: File) {
         gradleController.onQuickRunOrCancel(projectRoot)
     }
 
-    fun onSyncProject(projectRoot: File?) {
+    fun onSyncProject(projectRoot: File) {
         gradleController.onSyncProject(projectRoot)
     }
 

@@ -27,8 +27,10 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -47,6 +49,7 @@ import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import com.neonide.studio.app.bottomsheet.EditorBottomSheetContent
 import com.neonide.studio.app.editor.SoraLanguageProvider
 import com.neonide.studio.app.editor.completion.UnifiedCompletionProvider
+import com.neonide.studio.utils.GradleBuildStatus
 import com.neonide.studio.utils.HexColorScanner
 import com.neonide.studio.utils.OpenFile
 import com.termux.app.TermuxActivity
@@ -87,6 +90,13 @@ fun EditorScreen(
 
     val navBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val peekHeight = 15.dp + navBarHeight
+
+    val gradleRunningState = remember { mutableStateOf(GradleBuildStatus.isRunning) }
+    DisposableEffect(Unit) {
+        val listener: (Boolean) -> Unit = { gradleRunningState.value = it }
+        GradleBuildStatus.addListener(listener)
+        onDispose { GradleBuildStatus.removeListener(listener) }
+    }
 
     BackHandler(enabled = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) {
         scope.launch {
@@ -206,6 +216,7 @@ fun EditorScreen(
                         activeFileState.value
                     )
                 },
+                isGradleRunning = gradleRunningState.value,
                 onBuildClick = {
                     gradleManager.onQuickRunOrCancel(projectPath)
                     scope.launch { scaffoldState.bottomSheetState.expand() }
