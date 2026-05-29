@@ -3,8 +3,6 @@ package com.neonide.studio.app.home.open
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -59,7 +57,7 @@ import com.neonide.studio.app.home.preferences.WizardPreferences
 import com.neonide.studio.app.utils.DisplayNameUtils
 import com.neonide.studio.app.utils.SafeDirLister
 import com.neonide.studio.ui.components.FormTextField
-import com.neonide.studio.utils.FileUtil
+import com.neonide.studio.utils.rememberDirectoryLauncher
 import com.termux.shared.termux.TermuxConstants
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -83,36 +81,21 @@ fun OpenProjectBottomSheet(onDismiss: () -> Unit) {
         isLoading = false
     }
 
-    val startForResult =
-        rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            val uri = result.data?.data ?: return@rememberLauncherForActivityResult
-
-            val dir = FileUtil.resolveUriToFile(uri)
-
-            if (dir != null) {
-                if (!dir.exists() || !dir.isDirectory) {
-                    Toast.makeText(
-                        context,
-                        R.string.err_invalid_picked_dir,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                    }
-                    openProject(context, dir)
-                }
-            } else {
-                Toast.makeText(
-                    context,
-                    R.string.err_invalid_picked_dir,
-                    Toast.LENGTH_SHORT
-                ).show()
+    val startForResult = rememberDirectoryLauncher { dir ->
+        if (dir.exists() && dir.isDirectory) {
+            scope.launch {
+                sheetState.hide()
+                onDismiss()
             }
+            openProject(context, dir)
+        } else {
+            Toast.makeText(
+                context,
+                R.string.err_invalid_picked_dir,
+                Toast.LENGTH_SHORT
+            ).show()
         }
+    }
 
     val filteredProjects = if (searchQuery.isBlank()) {
         projects
@@ -146,7 +129,7 @@ fun OpenProjectBottomSheet(onDismiss: () -> Unit) {
                 )
 
                 OutlinedButton(
-                    onClick = { startForResult.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)) },
+                    onClick = { startForResult.launch(null) },
                     modifier = Modifier.size(48.dp),
                     contentPadding = PaddingValues(0.dp)
                 ) {
@@ -165,12 +148,7 @@ fun OpenProjectBottomSheet(onDismiss: () -> Unit) {
                     .fillMaxWidth()
                     .padding(top = 12.dp),
                 placeholder = stringResource(id = R.string.search_projects_hint),
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_search),
-                        contentDescription = null
-                    )
-                },
+                leadingIcon = painterResource(id = R.drawable.ic_search),
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {

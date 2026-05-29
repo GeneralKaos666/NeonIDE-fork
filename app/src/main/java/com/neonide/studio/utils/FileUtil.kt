@@ -21,8 +21,9 @@ object FileUtil {
             if (authority == INTERNAL_AUTHORITY) {
                 result = if (docId == "/") {
                     TermuxConstants.TERMUX_HOME_DIR
+                } else if (docId.startsWith(TermuxConstants.TERMUX_HOME_DIR.absolutePath)) {
+                    File(docId)
                 } else {
-                    // docId is relative to home, e.g. "/projects"
                     File(TermuxConstants.TERMUX_HOME_DIR, docId)
                 }
             } else if (authority == EXTERNAL_AUTHORITY) {

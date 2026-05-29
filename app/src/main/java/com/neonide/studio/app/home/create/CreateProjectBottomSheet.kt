@@ -6,8 +6,6 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -73,7 +71,7 @@ import com.neonide.studio.EditorActivity
 import com.neonide.studio.R
 import com.neonide.studio.app.home.preferences.WizardPreferences
 import com.neonide.studio.ui.components.FormTextField
-import com.neonide.studio.utils.FileUtil
+import com.neonide.studio.utils.rememberDirectoryLauncher
 import com.termux.shared.termux.TermuxConstants
 import java.io.File
 import kotlinx.coroutines.launch
@@ -102,23 +100,9 @@ fun CreateProjectBottomSheet(onDismiss: () -> Unit) {
 
     val templates = remember { ProjectTemplateRegistry.all() }
 
-    val folderPickerLauncher =
-        rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            val uri = result.data?.data ?: return@rememberLauncherForActivityResult
-            val dir = FileUtil.resolveUriToFile(uri)
-
-            if (dir != null) {
-                saveLocation = dir.absolutePath
-            } else {
-                Toast.makeText(
-                    context,
-                    R.string.err_invalid_picked_dir,
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
+    val folderPickerLauncher = rememberDirectoryLauncher { file ->
+        saveLocation = file.absolutePath
+    }
 
     fun updatePackageName(name: String, template: ProjectTemplate) {
         val templateRaw = context.getString(template.nameRes).lowercase()
@@ -234,12 +218,7 @@ fun CreateProjectBottomSheet(onDismiss: () -> Unit) {
                             }
                         },
                         label = stringResource(id = R.string.project_name),
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_add),
-                                contentDescription = null
-                            )
-                        },
+                        leadingIcon = painterResource(id = R.drawable.ic_add),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 12.dp)
@@ -252,12 +231,7 @@ fun CreateProjectBottomSheet(onDismiss: () -> Unit) {
                             isPackageNameManuallyEdited = true
                         },
                         label = stringResource(id = R.string.package_name),
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_language_android),
-                                contentDescription = null
-                            )
-                        },
+                        leadingIcon = painterResource(id = R.drawable.ic_language_android),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 12.dp)
@@ -267,17 +241,10 @@ fun CreateProjectBottomSheet(onDismiss: () -> Unit) {
                         value = saveLocation,
                         onValueChange = { saveLocation = it },
                         label = stringResource(id = R.string.project_location),
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_folder),
-                                contentDescription = null
-                            )
-                        },
+                        leadingIcon = painterResource(id = R.drawable.ic_folder),
                         trailingIcon = {
                             IconButton(onClick = {
-                                folderPickerLauncher.launch(
-                                    Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-                                )
+                                folderPickerLauncher.launch(null)
                             }) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_folder),

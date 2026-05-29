@@ -71,7 +71,8 @@ class EditorGradleController(
             projectDir = projectRoot,
             args = plan.args,
             actionLabel = activity.getString(R.string.quick_run),
-            installApkOnSuccess = true
+            installApkOnSuccess = true,
+            variant = variant
         )
     }
 
@@ -79,7 +80,8 @@ class EditorGradleController(
         projectDir: File,
         args: List<String>,
         actionLabel: String,
-        installApkOnSuccess: Boolean
+        installApkOnSuccess: Boolean,
+        variant: String = "debug"
     ) {
         gradleRunning = true
 
@@ -94,6 +96,7 @@ class EditorGradleController(
             args = args,
             actionLabel = actionLabel,
             installOnSuccess = installApkOnSuccess,
+            variant = variant,
             logFilePath = File(activity.filesDir, "gradle-build.log").absolutePath
         )
     }

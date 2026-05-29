@@ -43,6 +43,7 @@ class GradleService : Service() {
         const val EXTRA_ACTION_LABEL = "extra_action_label"
         const val EXTRA_INSTALL_ON_SUCCESS = "extra_install_on_success"
         const val EXTRA_LOG_FILE_PATH = "extra_log_file_path"
+        const val EXTRA_VARIANT = "extra_variant"
 
         fun startBuild(
             context: Context,
@@ -50,6 +51,7 @@ class GradleService : Service() {
             args: List<String>,
             actionLabel: String,
             installOnSuccess: Boolean,
+            variant: String = "debug",
             logFilePath: String? = null
         ) {
             val intent = Intent(context, GradleService::class.java).apply {
@@ -58,6 +60,7 @@ class GradleService : Service() {
                 putExtra(EXTRA_ARGS, args.toTypedArray())
                 putExtra(EXTRA_ACTION_LABEL, actionLabel)
                 putExtra(EXTRA_INSTALL_ON_SUCCESS, installOnSuccess)
+                putExtra(EXTRA_VARIANT, variant)
                 putExtra(EXTRA_LOG_FILE_PATH, logFilePath)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -87,12 +90,20 @@ class GradleService : Service() {
                 val args = intent.getStringArrayExtra(EXTRA_ARGS)?.toList()
                 val actionLabel = intent.getStringExtra(EXTRA_ACTION_LABEL) ?: "Build"
                 val installOnSuccess = intent.getBooleanExtra(EXTRA_INSTALL_ON_SUCCESS, false)
+                val variant = intent.getStringExtra(EXTRA_VARIANT) ?: "debug"
                 val logFilePath = intent.getStringExtra(EXTRA_LOG_FILE_PATH)
 
                 if (projectDir != null && args != null) {
                     GradleBuildStatus.isRunning = true
                     startForeground(NOTIFICATION_ID, createNotification(actionLabel, "Starting..."))
-                    executeBuild(projectDir, args, actionLabel, installOnSuccess, logFilePath)
+                    executeBuild(
+                        projectDir,
+                        args,
+                        actionLabel,
+                        installOnSuccess,
+                        variant,
+                        logFilePath
+                    )
                 } else {
                     stopSelf()
                 }
@@ -115,6 +126,7 @@ class GradleService : Service() {
         args: List<String>,
         actionLabel: String,
         installOnSuccess: Boolean,
+        variant: String,
         logFilePath: String?
     ) {
         currentJob?.cancel()
@@ -158,17 +170,10 @@ class GradleService : Service() {
                 if (result.isSuccessful && installOnSuccess) {
                     updateNotification(actionLabel, "Build successful, installing...")
 
-                    val debugApk = File(projectDir, "app/build/outputs/apk/debug/app-debug.apk")
-                    val apk = if (debugApk.exists()) {
-                        debugApk
-                    } else {
-                        val apkDir = File(projectDir, "app/build/outputs/apk")
-                        val apks = apkDir.walkTopDown().filter {
-                            it.isFile && it.extension == "apk"
-                        }.toList()
-                        apks.firstOrNull { it.path.contains("debug", ignoreCase = true) }
-                            ?: apks.firstOrNull()
-                    }
+                    val apkDir = File(projectDir, "app/build/outputs/apk/$variant")
+                    val apk = apkDir.walkTopDown().filter {
+                        it.isFile && it.extension == "apk"
+                    }.firstOrNull()
 
                     if (apk != null) {
                         ApkInstallUtils.installApk(this@GradleService, apk)

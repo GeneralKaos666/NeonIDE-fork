@@ -9,6 +9,7 @@ import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.neonide.studio.R
 import com.neonide.studio.utils.FileUtil
 import java.io.File
 import java.net.URI
@@ -24,6 +25,7 @@ import org.eclipse.jgit.lib.ProgressMonitor
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 
 class GitViewModel(application: Application) : AndroidViewModel(application) {
+    private val app = application
     private val _uiState = MutableStateFlow(GitLayoutState())
     val uiState: StateFlow<GitLayoutState> = _uiState.asStateFlow()
 
@@ -57,17 +59,12 @@ class GitViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // ---- simple update functions ----
-    fun updateUrl(v: String) {
-        _uiState.update {
-            val new = it.copy(url = v, urlError = null)
-            // Auto‑fill repo name if user hasn't manually changed it
-            if (!repoNameManuallyEdited) {
-                val inferred = inferRepoName(v) ?: ""
-                new.copy(repoName = inferred)
-            } else {
-                new
-            }
-        }
+    fun updateUrl(v: String) = _uiState.update {
+        it.copy(
+            url = v,
+            urlError = null,
+            repoName = if (repoNameManuallyEdited) it.repoName else inferRepoName(v).orEmpty()
+        )
     }
 
     fun updateRepoName(v: String) {
@@ -106,36 +103,36 @@ class GitViewModel(application: Application) : AndroidViewModel(application) {
         var valid = true
 
         if (s.url.isBlank()) {
-            update { it.copy(urlError = "Repository URL cannot be empty") }
+            update { it.copy(urlError = app.getString(R.string.url_empty)) }
             valid = false
         } else if (inferRepoName(s.url) == null) {
-            update { it.copy(urlError = "Invalid repository URL") }
+            update { it.copy(urlError = app.getString(R.string.url_invalid)) }
             valid = false
         }
 
         if (s.repoName.isBlank()) {
-            update { it.copy(repoNameError = "Name cannot be empty") }
+            update { it.copy(repoNameError = app.getString(R.string.name_empty)) }
             valid = false
         } else if (!s.repoName.matches(Regex("[A-Za-z0-9._-]+"))) {
-            update { it.copy(repoNameError = "Only letters, numbers, . _ -") }
+            update { it.copy(repoNameError = app.getString(R.string.name_invalid)) }
             valid = false
         }
 
         if (s.shallowClone) {
             val d = s.depth.toIntOrNull()
             if (d == null || d < 1) {
-                update { it.copy(depthError = "Depth must be a positive number") }
+                update { it.copy(depthError = app.getString(R.string.depth_invalid)) }
                 valid = false
             }
         }
 
         if (s.useCredentials) {
             if (s.username.isBlank()) {
-                update { it.copy(usernameError = "Username required") }
+                update { it.copy(usernameError = app.getString(R.string.username_required)) }
                 valid = false
             }
             if (s.password.isBlank()) {
-                update { it.copy(passwordError = "Password required") }
+                update { it.copy(passwordError = app.getString(R.string.password_required)) }
                 valid = false
             }
         }
@@ -145,14 +142,14 @@ class GitViewModel(application: Application) : AndroidViewModel(application) {
             // Attempt to create it
             if (!dest.mkdirs()) {
                 update {
-                    it.copy(destinationError = "Destination does not exist and cannot be created")
+                    it.copy(destinationError = app.getString(R.string.dest_not_exist))
                 }
                 valid = false
             }
         }
 
         if (valid && File(dest, s.repoName).exists()) {
-            update { it.copy(destinationError = "Project directory already exists") }
+            update { it.copy(destinationError = app.getString(R.string.dest_already_exists)) }
             valid = false
         }
 
@@ -196,7 +193,7 @@ class GitViewModel(application: Application) : AndroidViewModel(application) {
                 isCancelled = false,
                 progressPercent = 0,
                 progressText = "",
-                statusText = "Cloning…",
+                statusText = app.getString(R.string.cloning_status),
                 urlError = null,
                 destinationError = null
             )
@@ -285,10 +282,15 @@ class GitViewModel(application: Application) : AndroidViewModel(application) {
         withContext(Dispatchers.Main) {
             if (_uiState.value.isCancelled) {
                 targetDir.deleteRecursively()
-                _uiState.update { it.copy(isCloning = false, statusText = "Cancelled") }
+                _uiState.update {
+                    it.copy(isCloning = false, statusText = app.getString(R.string.cancelled))
+                }
             } else {
                 _uiState.update {
-                    it.copy(isCloning = false, statusText = "Done – ${targetDir.absolutePath}")
+                    it.copy(
+                        isCloning = false,
+                        statusText = app.getString(R.string.done, targetDir.absolutePath)
+                    )
                 }
                 if (_uiState.value.openProjectAfter) {
                     onSuccess(targetDir)
@@ -303,15 +305,18 @@ class GitViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update {
                 it.copy(
                     isCloning = false,
-                    statusText = "Failed",
-                    destinationError = e.localizedMessage ?: e.message ?: "Unknown error"
+                    statusText = app.getString(R.string.failed),
+                    destinationError =
+                        e.localizedMessage ?: e.message ?: app.getString(R.string.unknown_error)
                 )
             }
         }
     }
 
     fun cancelClone() {
-        _uiState.update { it.copy(isCancelled = true, statusText = "Stopping…") }
+        _uiState.update {
+            it.copy(isCancelled = true, statusText = app.getString(R.string.stopping))
+        }
     }
 
     private fun inferRepoName(url: String): String? = try {
