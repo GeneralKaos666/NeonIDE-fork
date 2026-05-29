@@ -89,7 +89,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         IDEFileLogger.clearLogFile()
         enableEdgeToEdge()
-        window.isNavigationBarContrastEnforced = false
 
         // Initial check on startup
         updatePermissionStates()
@@ -112,11 +111,11 @@ class MainActivity : ComponentActivity() {
         AppScaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background
-        ) { innerPadding ->
+        ) {
             NavHost(
                 navController = navController,
                 startDestination = if (isSetupComplete) MainLayoutRoute else PermissionRoute,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.fillMaxSize()
             ) {
                 composable<PermissionRoute> {
                     permissionScreen()

@@ -3,12 +3,14 @@ package com.neonide.studio.ui.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.input.VisualTransformation
 
 /**
@@ -22,7 +24,7 @@ fun FormTextField(
     label: String? = null,
     modifier: Modifier = Modifier.fillMaxWidth(),
     placeholder: String? = null,
-    leadingIcon: @Composable (() -> Unit)? = null,
+    leadingIcon: Painter? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     isError: Boolean = false,
     supportingText: String? = null,
@@ -38,7 +40,7 @@ fun FormTextField(
         onValueChange = onValueChange,
         label = label?.let { { Text(it) } },
         placeholder = placeholder?.let { { Text(it) } },
-        leadingIcon = leadingIcon,
+        leadingIcon = leadingIcon?.let { painter -> { Icon(painter, null) } },
         trailingIcon = trailingIcon,
         isError = isError,
         supportingText = supportingText?.let { { Text(it) } },
