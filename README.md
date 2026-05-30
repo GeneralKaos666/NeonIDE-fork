@@ -11,3 +11,7 @@ Modern Integrated Development Environment(IDE) for Android That Lets you write c
 - Tree Sitter : [android-tree-sitter](https://github.com/AndroidIDEOfficial/android-tree-sitter)
 - Java Language Server : [Java compiler](https://github.com/georgewfraser/java-language-server)
 - XML Language Server : [LemMinX](https://github.com/eclipse-lemminx/lemminx)
+## Acknowledgements
+
+Thanks to [JetBrains](https://www.jetbrains.com/?from=CodeEditor) for allocating free open-source
+licences for IDEs such as [IntelliJ IDEA](https://www.jetbrains.com/idea/?from=CodeEditor)
