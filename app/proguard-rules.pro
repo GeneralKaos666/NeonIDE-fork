@@ -48,3 +48,18 @@
 -dontwarn org.eclipse.jgit.transport.HttpAuthMethod$Negotiate
 -dontwarn org.eclipse.jgit.util.GSSManagerFactory$DefaultGSSManagerFactory
 -dontwarn org.eclipse.jgit.util.Monitoring
+
+# --- Sora Editor TextMate Theme / Color Scheme ---
+-keep class io.github.rosemoe.sora.langs.textmate.TextMateColorScheme { *; }
+-keep class io.github.rosemoe.sora.langs.textmate.registry.ThemeRegistry { *; }
+-keep class io.github.rosemoe.sora.langs.textmate.registry.model.ThemeModel { *; }
+-keep class io.github.rosemoe.sora.langs.textmate.registry.FileProviderRegistry { *; }
+-keep class io.github.rosemoe.sora.langs.textmate.registry.GrammarRegistry { *; }
+-keep class io.github.rosemoe.sora.langs.textmate.** { *; }
+
+# Eclipse TM4E core — theme source parsing
+-keep class org.eclipse.tm4e.** { *; }
+-dontwarn org.eclipse.tm4e.**
+
+# Keep all TextMate registry internals
+-keep class io.github.rosemoe.sora.langs.textmate.registry.** { *; }
