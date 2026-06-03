@@ -85,7 +85,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        IDEFileLogger.clearLogFile()
         enableEdgeToEdge()
 
         // Initial check on startup
@@ -211,6 +210,9 @@ class MainActivity : ComponentActivity() {
                                 onCheckedChange = { enabled ->
                                     isLoggingEnabled = enabled
                                     prefs?.setIdeFileLoggingEnabled(enabled)
+                                    if (!enabled) {
+                                        IDEFileLogger.clearLogFile()
+                                    }
                                 }
                             )
                         }
