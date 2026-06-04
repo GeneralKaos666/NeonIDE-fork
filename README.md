@@ -16,6 +16,8 @@ Modern Integrated Development Environment(IDE) for Android That Lets you write c
   <img src="/images/feat/Panel_02.jpg" width="49%" />
 </div>
 
+Some module/package doesn't show in AC(Auto Completion) :
+- You need to run assembleDebug to produce artifacts for classpath to make AC show
 ## Screenshots
 <div>
   <img src="/images/01.jpg" width="32%"/>
