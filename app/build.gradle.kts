@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.neonide.studio"
-    compileSdk = 36
+    compileSdk = 37
     ndkVersion = "29.0.14033849"
 
     defaultConfig {

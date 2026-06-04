@@ -133,10 +133,11 @@ fun EditorScreen(
             if (editor.text.toString() != activeFile.content) {
                 editor.setText(activeFile.content)
             } else {
-                editor.post {
-                    editor.setHighlightTexts(
-                        HexColorScanner.computeHighlights(editor.text)
-                    )
+                scope.launch(Dispatchers.Default) {
+                    val highlights = HexColorScanner.computeHighlights(editor.text)
+                    withContext(Dispatchers.Main) {
+                        editor.setHighlightTexts(highlights)
+                    }
                 }
             }
             val ext = file.extension.lowercase()
@@ -273,10 +274,11 @@ fun EditorScreen(
                                 }
                             }
                         }
-                        editor.post {
-                            editor.setHighlightTexts(
-                                HexColorScanner.computeHighlights(editor.text)
-                            )
+                        scope.launch(Dispatchers.Default) {
+                            val highlights = HexColorScanner.computeHighlights(editor.text)
+                            withContext(Dispatchers.Main) {
+                                editor.setHighlightTexts(highlights)
+                            }
                         }
                     }
                     updatePositionText(editor, editorVm)

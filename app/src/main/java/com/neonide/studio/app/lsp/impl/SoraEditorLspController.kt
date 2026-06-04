@@ -16,13 +16,13 @@ import io.github.rosemoe.sora.lsp.client.languageserver.serverdefinition.Languag
 import io.github.rosemoe.sora.lsp.editor.LspEditor
 import io.github.rosemoe.sora.lsp.editor.LspProject
 import io.github.rosemoe.sora.widget.CodeEditor
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.DidChangeConfigurationParams
-import java.io.File
 
 /**
  * LSP controller using sora-editor's [LspProject] for connection management.
@@ -41,6 +41,7 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
     private var project: LspProject? = null
     private var current: LspEditor? = null
     private var currentFile: File? = null
+    private var connectionJob: kotlinx.coroutines.Job? = null
 
     /** Cached classpath JARs from [prefetchClassPath], keyed by project path. */
     @Volatile
@@ -53,8 +54,13 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
         wrapperLanguage: Language,
         projectRoot: File?
     ): Boolean {
+        if (currentFile?.absolutePath == file.absolutePath && current?.editor == editor) {
+            return true
+        }
+
+        detach()
+
         val serverId = LspUtils.getServerId(file) ?: run {
-            detach()
             return false
         }
 
@@ -81,38 +87,50 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
         val lspEditor = try {
             p.getOrCreateEditor(file.absolutePath)
         } catch (t: Throwable) {
-            Logger.logStackTraceWithMessage(TAG, "Failed to create LSP editor for ${file.absolutePath}", t)
+            Logger.logDebug(TAG, "Failed to create LSP editor for ${file.absolutePath}", t)
             return false
         }
 
-        // Critical: set wrapperLanguage BEFORE editor — LspLanguage.getAnalyzeManager()
-        // delegates to wrapperLanguage.analyzeManager. Setting it first ensures the
-        // TsAnalyzeManager survives the setEditorLanguage(LspLanguage) call inside the setter.
         lspEditor.wrapperLanguage = wrapperLanguage
         lspEditor.editor = editor
 
-        scope.launch {
+        current = lspEditor
+        currentFile = file
+
+        connectionJob = scope.launch {
             try {
                 val ok = withContext(Dispatchers.IO) {
                     Logger.logDebug(TAG, "Connecting LSP for ${file.name}...")
                     lspEditor.connectWithTimeout()
                 }
                 Logger.logInfo(TAG, "LSP connected for ${file.absolutePath} (serverId=$serverId)")
-                current = lspEditor
-                currentFile = file
 
                 // Configure server in background (classpath, settings)
                 scope.launch {
                     withContext(Dispatchers.IO) {
                         runCatching { configureServer(serverId, lspEditor) }
                             .onFailure { t ->
-                                Logger.logStackTraceWithMessage(TAG, "Failed to configure server", t)
+                                Logger.logDebug(
+                                    TAG,
+                                    "Failed to configure server",
+                                    t
+                                )
                             }
                     }
                 }
             } catch (t: Throwable) {
-                Logger.logStackTraceWithMessage(TAG, "LSP connect failed for ${file.absolutePath}", t)
-                runCatching { lspEditor.dispose() }
+                if (t !is kotlinx.coroutines.CancellationException) {
+                    Logger.logDebug(
+                        TAG,
+                        "LSP connect failed for ${file.absolutePath}",
+                        t
+                    )
+                    if (current == lspEditor) {
+                        detach()
+                    } else {
+                        runCatching { lspEditor.dispose() }
+                    }
+                }
             }
         }
 
@@ -120,10 +138,14 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
     }
 
     override fun detach() {
+        connectionJob?.cancel()
+        connectionJob = null
+
         val prev = current
         current = null
         currentFile = null
         if (prev != null) {
+            runCatching { prev.editor = null }
             scope.launch(Dispatchers.IO) {
                 runCatching { prev.dispose() }
             }
@@ -149,12 +171,15 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
             val jars = scanAllClassPathJars(path)
             cachedClassPath = jars
             cachedClassPathProject = path
-            Logger.logDebug(TAG, "Prefetched ${jars.size} classpath entries in ${System.currentTimeMillis() - start}ms")
+            Logger.logDebug(
+                TAG,
+                "Prefetched ${jars.size} classpath entries in ${System.currentTimeMillis() - start}ms"
+            )
         }
     }
 
-    private fun createProject(base: File): LspProject {
-        return LspProject(base.absolutePath).also { it.init() }
+    private fun createProject(base: File): LspProject = LspProject(base.absolutePath).also {
+        it.init()
     }
 
     private fun ensureServerDefinitions(project: LspProject) {
@@ -330,7 +355,11 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
         return if (jar.exists()) jar else null
     }
 
-    private fun addGradleCacheJars(gradleCacheDir: File, projectPath: String, out: MutableList<String>) {
+    private fun addGradleCacheJars(
+        gradleCacheDir: File,
+        projectPath: String,
+        out: MutableList<String>
+    ) {
         if (!gradleCacheDir.isDirectory) return
 
         val needed = setOf(
@@ -371,7 +400,8 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
     private fun readGradleVersionFromWrapper(projectPath: String): String? {
         val wrapperFile = File(projectPath, "gradle/wrapper/gradle-wrapper.properties")
         if (!wrapperFile.isFile) return null
-        val line = wrapperFile.readLines().firstOrNull { it.startsWith("distributionUrl=") } ?: return null
+        val line =
+            wrapperFile.readLines().firstOrNull { it.startsWith("distributionUrl=") } ?: return null
         return Regex("""gradle-(\d+\.\d+(?:\.\d+)?)-""").find(line)?.groupValues?.get(1)
     }
 }
