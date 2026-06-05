@@ -18,6 +18,9 @@ Modern Integrated Development Environment(IDE) for Android That Lets you write c
 
 Some module/package doesn't show in AC(Auto Completion) :
 - You need to run assembleDebug to produce artifacts for classpath to make AC show
+
+The Editor show's false diagnostic/tooltip
+- Same to AC you need to build the app to produce artifacts to fix diagnostic false error
 ## Screenshots
 <div>
   <img src="/images/01.jpg" width="32%"/>
