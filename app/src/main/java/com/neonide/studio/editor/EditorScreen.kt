@@ -271,12 +271,12 @@ fun EditorScreen(
                             }
                         }
                         editor.setHighlightTexts(null)
-                        // Force dismiss diagnostic tooltip when typing to prioritize completion
+                        // Only dismiss if showing to avoid unnecessary layout triggers
                         try {
                             val tooltip = editor.getComponent(
                                 EditorDiagnosticTooltipWindow::class.java
                             )
-                            if (tooltip != null && tooltip.isShowing) {
+                            if (tooltip?.isShowing == true) {
                                 tooltip.dismiss()
                             }
                         } catch (e: Exception) { }

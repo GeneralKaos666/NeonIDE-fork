@@ -54,7 +54,11 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
         wrapperLanguage: Language,
         projectRoot: File?
     ): Boolean {
-        if (currentFile?.absolutePath == file.absolutePath && current?.editor == editor) {
+        val isSameFile = currentFile?.absolutePath == file.absolutePath
+        val isSameEditor = current?.editor == editor
+        val isConnected = current?.isConnected == true
+
+        if (isSameFile && isSameEditor && isConnected) {
             return true
         }
 

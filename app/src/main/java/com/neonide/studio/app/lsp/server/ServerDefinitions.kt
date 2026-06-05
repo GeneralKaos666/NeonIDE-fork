@@ -92,8 +92,8 @@ object ServerDefinitions {
             ProcessStreamConnectionProvider(
                 listOf(
                     termuxJava,
-                    "-Xms128m",
-                    "-Xmx512m",
+                    "-Xms256m",
+                    "-Xmx1024m",
                     "-XX:+UseG1GC",
                     "-XX:TieredStopAtLevel=1",
                     "-XX:+UseStringDeduplication",
