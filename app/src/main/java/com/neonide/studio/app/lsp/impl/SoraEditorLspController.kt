@@ -1,5 +1,6 @@
 package com.neonide.studio.app.lsp.impl
 
+import android.content.Context
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.neonide.studio.app.lsp.EditorLspController
@@ -8,7 +9,6 @@ import com.neonide.studio.app.lsp.server.JavaLanguageServer
 import com.neonide.studio.app.lsp.server.KotlinLanguageServer
 import com.neonide.studio.app.lsp.server.ServerDefinitions
 import com.neonide.studio.app.lsp.server.XMLLanguageServer
-import com.neonide.studio.logger.IDEFileLogger
 import com.termux.shared.logger.Logger
 import com.termux.shared.termux.TermuxConstants
 import io.github.rosemoe.sora.lang.Language
@@ -29,8 +29,9 @@ import org.eclipse.lsp4j.DidChangeConfigurationParams
  *
  * Server processes are started directly via [ProcessStreamConnectionProvider] —
  * no Android Services or LocalSocket needed.
+ * Servers are expected to be installed via the Extensions system (downloaded from extensions.json).
  */
-class SoraEditorLspController(private val context: android.content.Context) : EditorLspController {
+class SoraEditorLspController(private val context: Context) : EditorLspController {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -196,80 +197,24 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
                 project.addServerDefinition(factory())
             }.onFailure { e ->
                 if (e.message?.contains("already exists") != true) {
-                    Logger.logWarn(TAG, "Failed to register server for $ext: ${e.message}")
+                    // Silently ignore - server may already be registered
                 }
             }
         }
 
-        addIfAbsent("java", "java") { ServerDefinitions.java(resolveJavaServer()) }
-        addIfAbsent("kt", "kotlin") { ServerDefinitions.`kotlin`(resolveKotlinServer()) }
-        addIfAbsent("xml", "xml") { ServerDefinitions.xml(resolveLemminx()) }
-    }
-
-    private fun resolveLemminx(): File {
-        val dir = File(context.filesDir, "xml-language-server")
-        val jar = File(dir, "lemminx.jar")
-        if (!jar.exists()) {
-            dir.mkdirs()
-            copyAsset("servers/lemminx-uber.jar", jar)
+        addIfAbsent("java", "java") { ServerDefinitions.java(getServerDir("java-language-server")) }
+        addIfAbsent("kt", "kotlin") {
+            ServerDefinitions.`kotlin`(getServerDir("kotlin-language-server"))
         }
-        return jar
-    }
-
-    private fun resolveJavaServer(): File {
-        val dir = File(context.filesDir, "java-language-server")
-        if (!dir.resolve("java-language-server.jar").exists()) {
-            dir.mkdirs()
-            unzipAsset("servers/java-language-server.zip", dir)
-        }
-        return dir
-    }
-
-    private fun resolveKotlinServer(): File {
-        val dir = File(context.filesDir, "kotlin-language-server")
-        if (!dir.resolve("lib").isDirectory) {
-            dir.mkdirs()
-            unzipAsset("servers/kotlin-language-server.zip", dir)
-        }
-        return dir
-    }
-
-    private fun copyAsset(assetPath: String, target: File) {
-        runCatching {
-            context.assets.open(assetPath).use { input ->
-                target.outputStream().use { output -> input.copyTo(output) }
-            }
-            Logger.logDebug(TAG, "Extracted $assetPath -> ${target.absolutePath}")
-        }.onFailure {
-            Logger.logWarn(TAG, "Failed to extract $assetPath: ${it.message}")
+        addIfAbsent("xml", "xml") {
+            ServerDefinitions.xml(File(getServerDir("xml-language-server"), "lemminx-uber.jar"))
         }
     }
 
-    private fun unzipAsset(assetPath: String, targetDir: File) {
-        runCatching {
-            context.assets.open(assetPath).use { input ->
-                java.util.zip.ZipInputStream(input).use { zip ->
-                    var entry = zip.nextEntry
-                    while (entry != null) {
-                        val outFile = File(targetDir, entry.name)
-                        if (entry.isDirectory) {
-                            outFile.mkdirs()
-                        } else {
-                            outFile.parentFile?.mkdirs()
-                            outFile.outputStream().use { zip.copyTo(it) }
-                        }
-                        entry = zip.nextEntry
-                    }
-                }
-            }
-            Logger.logDebug(TAG, "Unzipped $assetPath -> ${targetDir.absolutePath}")
-        }.onFailure {
-            Logger.logWarn(TAG, "Failed to unzip $assetPath: ${it.message}")
-        }
-    }
+    private fun getServerDir(id: String): File = File(context.filesDir, id)
 
     private fun configureServer(serverId: String, lspEditor: LspEditor) {
-        val rm = lspEditor.requestManager ?: return
+        val rm = lspEditor.requestManager
 
         when (serverId) {
             JavaLanguageServer.SERVER_ID -> {
@@ -305,7 +250,7 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
                 val projectPath = lspEditor.project.projectUri.path
                 val classPathArr = JsonArray()
 
-                val klsLibDir = File(context.filesDir, "kotlin-language-server/lib")
+                val klsLibDir = File(getServerDir("kotlin-language-server"), "lib")
                 if (klsLibDir.isDirectory) {
                     klsLibDir.listFiles()?.filter { it.extension == "jar" }?.forEach {
                         classPathArr.add(it.absolutePath)

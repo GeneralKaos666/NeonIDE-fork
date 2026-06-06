@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.neonide.studio.R
 import com.neonide.studio.ui.components.AppIcon
 import com.neonide.studio.ui.components.ToggleMenuItem
-import com.neonide.studio.utils.divider.horizontalDivider
+import com.neonide.studio.utils.Divider.horizontalDivider
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.component.EditorAutoCompletion
 import io.github.rosemoe.sora.widget.component.Magnifier
