@@ -45,6 +45,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.neonide.studio.app.home.create.CreateProjectBottomSheet
 import com.neonide.studio.app.home.open.OpenProjectBottomSheet
+import com.neonide.studio.extensions.ExtensionsScreen
 import com.neonide.studio.layout.GitLayout
 import com.neonide.studio.layout.GitLayoutState
 import com.neonide.studio.layout.GitViewModel
@@ -75,6 +76,8 @@ import kotlinx.serialization.Serializable
 @Serializable object IdeConfigRoute
 
 @Serializable object GitLayoutRoute
+
+@Serializable object ExtensionsRoute
 
 class MainActivity : ComponentActivity() {
 
@@ -141,6 +144,7 @@ class MainActivity : ComponentActivity() {
                         onOpenTerminal = {
                             startActivity(Intent(this@MainActivity, TermuxActivity::class.java))
                         },
+                        onOpenExtensions = { navController.navigate(ExtensionsRoute) },
                         onOpenSettings = { navController.navigate(IdeConfigRoute) },
                         onOpenAbout = {
                             Toast.makeText(
@@ -163,6 +167,11 @@ class MainActivity : ComponentActivity() {
                         viewModel = viewModel,
                         onFinished = { navController.popBackStack() }
                     )
+                }
+                composable<ExtensionsRoute> {
+                    ExtensionsScreen(context = this@MainActivity, onBack = {
+                        navController.popBackStack()
+                    })
                 }
             }
         }
@@ -330,13 +339,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun permissionItem(
-        icon: Painter,
-        title: String,
-        description: String,
-        isGranted: Boolean,
-        onClick: () -> Unit
-    ) {
+    private fun permissionItem(icon: Painter, title: String, description: String, isGranted: Boolean, onClick: () -> Unit) {
         AppRow(Modifier.fillMaxWidth()) {
             AppIcon(icon, size = 32.dp)
 

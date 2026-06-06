@@ -1,6 +1,7 @@
 package com.neonide.studio.app.home.open
 
 import android.content.Context
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -20,11 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal fun showProjectOptionsDialog(
-    context: Context,
-    project: File,
-    onActionComplete: () -> Unit
-) {
+internal fun showProjectOptionsDialog(context: Context, project: File, onActionComplete: () -> Unit) {
     val options = arrayOf(
         context.getString(R.string.backup_project),
         context.getString(R.string.delete_project_title_short),
@@ -141,19 +138,14 @@ private fun showRenameDialog(context: Context, project: File, onComplete: () -> 
 
     input.requestFocus()
     val imm = context.getSystemService(
-        android.content.Context.INPUT_METHOD_SERVICE
-    ) as android.view.inputmethod.InputMethodManager
+        Context.INPUT_METHOD_SERVICE
+    ) as InputMethodManager
     input.postDelayed({
-        imm.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+        imm.showSoftInput(input, 0)
     }, 100)
 }
 
-private fun renameProject(
-    context: Context,
-    oldProject: File,
-    newProject: File,
-    onComplete: () -> Unit
-) {
+private fun renameProject(context: Context, oldProject: File, newProject: File, onComplete: () -> Unit) {
     val scope = CoroutineScope(Dispatchers.IO)
     scope.launch {
         val renamed = runCatching { oldProject.renameTo(newProject) }.getOrDefault(false)

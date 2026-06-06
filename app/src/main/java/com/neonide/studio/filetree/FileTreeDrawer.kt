@@ -39,8 +39,8 @@ import cafe.adriel.bonsai.core.node.BranchNode
 import com.neonide.studio.R
 import com.neonide.studio.app.utils.SafeFileDeleter
 import com.neonide.studio.utils.ApkInstallUtils
+import com.neonide.studio.utils.Divider.horizontalDivider
 import com.neonide.studio.utils.PersistedBoolean
-import com.neonide.studio.utils.divider.horizontalDivider
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

@@ -8,14 +8,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-object divider {
+object Divider {
 
     @Composable
-    fun horizontalDivider(
-        modifier: Modifier = Modifier,
-        color: Color = Color.Black,
-        thickness: Dp = 1.dp
-    ) {
+    fun horizontalDivider(modifier: Modifier = Modifier, color: Color = Color.Black, thickness: Dp = 1.dp) {
         HorizontalDivider(
             modifier = modifier,
             color = color,
@@ -24,11 +20,7 @@ object divider {
     }
 
     @Composable
-    fun verticalDivider(
-        modifier: Modifier = Modifier,
-        color: Color = Color.Black,
-        thickness: Dp = 1.dp
-    ) {
+    fun verticalDivider(modifier: Modifier = Modifier, color: Color = Color.Black, thickness: Dp = 1.dp) {
         VerticalDivider(
             modifier = modifier,
             color = color,

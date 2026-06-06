@@ -34,6 +34,7 @@ fun mainLayout(
     onOpenProject: () -> Unit,
     onCloneRepo: () -> Unit,
     onOpenTerminal: () -> Unit,
+    onOpenExtensions: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit
 ) {
@@ -100,6 +101,13 @@ fun mainLayout(
                     stringResource(R.string.terminal),
                     painterResource(R.drawable.ic_terminal),
                     onOpenTerminal
+                )
+            }
+            item {
+                LayoutItem(
+                    stringResource(R.string.extensions),
+                    painterResource(R.drawable.ic_extension),
+                    onOpenExtensions
                 )
             }
             item {

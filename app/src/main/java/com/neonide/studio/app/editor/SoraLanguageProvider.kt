@@ -447,10 +447,9 @@ class SoraLanguageProvider(private val context: Context) {
         }
     }
 
-    private fun readAssetText(path: String): String =
-        context.assets.open(path).bufferedReader(Charsets.UTF_8).use {
-            it.readText()
-        }
+    private fun readAssetText(path: String): String = context.assets.open(path).bufferedReader(Charsets.UTF_8).use {
+        it.readText()
+    }
 
     private fun ensureTreeSitterLoaded() {
         if (treeSitterLoaded) return

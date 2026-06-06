@@ -37,16 +37,11 @@ import com.neonide.studio.ui.components.AppTopBar
 import com.neonide.studio.ui.components.FormTextField
 import com.neonide.studio.ui.layout.AppColumn
 import com.neonide.studio.ui.layout.AppRow
-import com.neonide.studio.utils.divider.horizontalDivider
+import com.neonide.studio.utils.Divider.horizontalDivider
 import com.neonide.studio.utils.rememberDirectoryLauncher
 
 @Composable
-fun GitLayout(
-    onBack: () -> Unit,
-    state: GitLayoutState,
-    viewModel: GitViewModel,
-    onFinished: () -> Unit
-) {
+fun GitLayout(onBack: () -> Unit, state: GitLayoutState, viewModel: GitViewModel, onFinished: () -> Unit) {
     val context = LocalContext.current
 
     val dirPickerLauncher = rememberDirectoryLauncher { file ->

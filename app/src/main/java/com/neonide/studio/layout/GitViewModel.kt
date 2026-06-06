@@ -263,10 +263,7 @@ class GitViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun configureCloneCommand(
-        cmd: org.eclipse.jgit.api.CloneCommand,
-        state: GitLayoutState
-    ) {
+    private fun configureCloneCommand(cmd: org.eclipse.jgit.api.CloneCommand, state: GitLayoutState) {
         if (state.branch.isNotBlank()) cmd.setBranch(state.branch)
         if (!state.singleBranch) cmd.setCloneAllBranches(true)
         if (state.shallowClone) cmd.setDepth(state.depth.toIntOrNull() ?: 1)

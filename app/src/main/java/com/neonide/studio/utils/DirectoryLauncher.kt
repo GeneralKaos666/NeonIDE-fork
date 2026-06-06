@@ -12,13 +12,12 @@ import java.io.File
  * Resolves the picked URI to a [File] and passes it to [onPicked].
  */
 @Composable
-fun rememberDirectoryLauncher(onPicked: (File) -> Unit): ActivityResultLauncher<Uri?> =
-    rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTree()
-    ) { uri ->
-        uri?.let {
-            FileUtil.resolveUriToFile(it)?.let { file ->
-                onPicked(file)
-            }
+fun rememberDirectoryLauncher(onPicked: (File) -> Unit): ActivityResultLauncher<Uri?> = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.OpenDocumentTree()
+) { uri ->
+    uri?.let {
+        FileUtil.resolveUriToFile(it)?.let { file ->
+            onPicked(file)
         }
     }
+}

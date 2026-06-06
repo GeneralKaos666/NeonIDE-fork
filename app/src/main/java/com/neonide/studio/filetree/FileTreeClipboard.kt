@@ -24,24 +24,15 @@ import com.neonide.studio.R
 import com.neonide.studio.ui.components.AppIcon
 import com.neonide.studio.ui.layout.AppColumn
 import com.neonide.studio.ui.layout.AppRow
-import com.neonide.studio.utils.divider.horizontalDivider
+import com.neonide.studio.utils.Divider.horizontalDivider
 import okio.Path
 
 enum class ClipboardMode { CUT, COPY }
 
-data class ClipboardEntry(
-    val path: Path,
-    val name: String,
-    val isDirectory: Boolean,
-    val mode: ClipboardMode
-)
+data class ClipboardEntry(val path: Path, val name: String, val isDirectory: Boolean, val mode: ClipboardMode)
 
 @Composable
-fun ClipboardIndicatorBar(
-    clipboard: ClipboardEntry?,
-    onClear: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun ClipboardIndicatorBar(clipboard: ClipboardEntry?, onClear: () -> Unit, modifier: Modifier = Modifier) {
     AnimatedVisibility(
         visible = clipboard != null,
         enter = slideInVertically { it },

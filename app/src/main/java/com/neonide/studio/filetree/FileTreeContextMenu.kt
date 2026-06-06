@@ -30,7 +30,7 @@ import com.neonide.studio.R
 import com.neonide.studio.ui.components.AppIcon
 import com.neonide.studio.ui.layout.AppColumn
 import com.neonide.studio.ui.layout.AppRow
-import com.neonide.studio.utils.divider.horizontalDivider
+import com.neonide.studio.utils.Divider.horizontalDivider
 import kotlinx.coroutines.launch
 import okio.Path
 
@@ -161,12 +161,7 @@ fun FileTreeContextMenu(
 }
 
 @Composable
-private fun ContextMenuItem(
-    iconRes: Int,
-    label: String,
-    enabled: Boolean = true,
-    onClick: () -> Unit
-) {
+private fun ContextMenuItem(iconRes: Int, label: String, enabled: Boolean = true, onClick: () -> Unit) {
     val textColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline
 
     AppRow(
