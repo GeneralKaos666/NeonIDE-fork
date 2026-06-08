@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import com.neonide.studio.R
 import com.neonide.studio.utils.OpenFile
 import io.github.rosemoe.sora.widget.CodeEditor
-import java.io.File
 
 @Composable
 fun EditorTabRow(
@@ -83,20 +82,6 @@ fun EditorTabRow(
                                 onClick = {
                                     isMenuExpanded = false
 
-                                    val currentText = if (activeFile == file) {
-                                        editorState.value?.text?.toString() ?: file.content
-                                    } else {
-                                        file.content
-                                    }
-                                    // testing only
-                                    if (file.isModified ||
-                                        (activeFile == file && currentText != file.content)
-                                    ) {
-                                        runCatching {
-                                            File(file.path).writeText(currentText)
-                                        }
-                                    }
-
                                     val newList = openFilesState.value.filter {
                                         it.path != file.path
                                     }
@@ -110,7 +95,6 @@ fun EditorTabRow(
                                 text = { Text(stringResource(R.string.close_others)) },
                                 onClick = {
                                     isMenuExpanded = false
-                                    // TODO File(file.path).writeText(currentText)
                                     val updatedActive = activeFile?.let { active ->
                                         val currentText =
                                             editorState.value?.text?.toString() ?: active.content
@@ -132,7 +116,6 @@ fun EditorTabRow(
                                 text = { Text(stringResource(R.string.close_all)) },
                                 onClick = {
                                     isMenuExpanded = false
-                                    // TODO File(file.path).writeText(currentText)
                                     openFilesState.value = emptyList()
                                     activeFileState.value = null
                                 }
