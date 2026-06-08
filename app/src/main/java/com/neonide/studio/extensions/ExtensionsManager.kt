@@ -85,7 +85,6 @@ class ExtensionsManager(private val context: Context) {
                     httpConnection.readTimeout = 10000
                     httpConnection.setRequestProperty("User-Agent", "NeonIDE-Extensions/1.0")
                     httpConnection.connect()
-                    val responseCode = httpConnection.responseCode
                     httpConnection.inputStream.use { input ->
                         downloadFile.outputStream().use { output ->
                             input.copyTo(output)
