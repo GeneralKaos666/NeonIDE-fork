@@ -24,6 +24,7 @@ export JAVA_HOME=$PREFIX/lib/jvm/java-21-openjdk
 export ANDROID_HOME=$HOME/android-sdk
 export ANDROID_SDK_ROOT=$ANDROID_HOME
 export ANDROID_USER_HOME=$HOME/.android
+export ANDROID_NDK=$ANDROID_HOME/ndk/29.0.14206865
 
 export PATH=$PATH:$JAVA_HOME/bin
 export PATH=$PATH:$ANDROID_HOME/platform-tools
