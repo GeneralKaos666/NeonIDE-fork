@@ -138,7 +138,7 @@ fun EditorScreen(
             }
             val ext = file.extension.lowercase()
             if (ext in
-                listOf("java", "kt", "kts", "xml", "yaml", "yml", "sh", "bash", "zsh", "json", "js")
+                listOf("java", "kt", "kts", "xml", "yaml", "yml", "sh", "bash", "zsh", "json", "js", "ts", "jsx", "tsx")
             ) {
                 runCatching {
                     lspController.attach(editor, file, language, projectPath)

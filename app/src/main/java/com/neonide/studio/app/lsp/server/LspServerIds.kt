@@ -8,6 +8,7 @@ object LspServerIds {
     const val KOTLIN = "kotlin"
     const val XML = "xml"
     const val JSON = "json"
+    const val JAVASCRIPT = "javascript"
     const val BASH = "bash"
     const val YAML = "yaml"
 }

@@ -207,9 +207,12 @@ class SoraEditorLspController(private val context: Context) : EditorLspControlle
         addIfAbsent("xml", "xml") {
             ServerDefinitions.xml(File(getServerDir("xml-language-server"), "lemminx-uber.jar"))
         }
-        val jsonDef = { ServerDefinitions.json(getServerDir("json-language-server")) }
-        addIfAbsent("json", "json", jsonDef)
-        addIfAbsent("js", "json", jsonDef)
+        addIfAbsent("json", "json") { ServerDefinitions.json(getServerDir("json-language-server")) }
+        val jsDef = { ServerDefinitions.javascript(getServerDir("typescript-language-server")) }
+        addIfAbsent("js", "javascript", jsDef)
+        addIfAbsent("ts", "javascript", jsDef)
+        addIfAbsent("jsx", "javascript", jsDef)
+        addIfAbsent("tsx", "javascript", jsDef)
         val bashDef = { ServerDefinitions.bash(getServerDir("bash-language-server")) }
         addIfAbsent("bash", "bash", bashDef)
         addIfAbsent("sh", "bash", bashDef)
@@ -260,6 +263,14 @@ class SoraEditorLspController(private val context: Context) : EditorLspControlle
                 json.addProperty("validate", true)
                 json.addProperty("allowComments", true)
                 root.add("json", json)
+                rm.didChangeConfiguration(DidChangeConfigurationParams().apply { settings = root })
+            }
+
+            LspServerIds.JAVASCRIPT -> {
+                val root = JsonObject()
+                val javascript = JsonObject()
+                javascript.addProperty("validate", true)
+                root.add("javascript", javascript)
                 rm.didChangeConfiguration(DidChangeConfigurationParams().apply { settings = root })
             }
 

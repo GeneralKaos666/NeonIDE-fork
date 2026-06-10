@@ -10,7 +10,8 @@ object LspUtils {
         "kt", "kts" -> LspServerIds.KOTLIN
         "xml" -> LspServerIds.XML
         "yaml", "yml" -> LspServerIds.YAML
-        "json", "js" -> LspServerIds.JSON
+        "json" -> LspServerIds.JSON
+        "js", "ts", "jsx", "tsx" -> LspServerIds.JAVASCRIPT
         "sh", "bash", "zsh" -> LspServerIds.BASH
         else -> null
     }
