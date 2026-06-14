@@ -68,7 +68,11 @@ data class ExtensionEntry(
     @SerialName("version")
     val version: String,
     @SerialName("size")
-    val size: Long = 0
+    val size: Long = 0,
+    @SerialName("type")
+    val type: String? = null,
+    @SerialName("checkPaths")
+    val checkPaths: List<String>? = null
 )
 
 @Composable
@@ -105,7 +109,7 @@ fun ExtensionsScreen(context: Context, onBack: () -> Unit) {
                 val parsed = Json.decodeFromString<ExtensionsJson>(jsonText)
                 extensions = parsed.extensions
                 installedExtensions = parsed.extensions.filter {
-                    manager.isExtensionInstalled(it.id)
+                    manager.isExtensionInstalled(it)
                 }.map { it.id }.toSet()
             } catch (e: Exception) {
                 error = "Failed to load: ${e.message}"
@@ -225,10 +229,7 @@ fun ExtensionsScreen(context: Context, onBack: () -> Unit) {
                         ExtensionCard(
                             extension = extension,
                             isInstalled = installedExtensions.contains(extension.id),
-                            isUpdateAvailable = manager.isUpdateAvailable(
-                                extension.id,
-                                extension.sha256
-                            ),
+                            isUpdateAvailable = manager.isUpdateAvailable(extension),
                             isInstalling = installingExtensionId == extension.id,
                             displaySize = displaySize,
                             onInstall = { installExtension(extension) },

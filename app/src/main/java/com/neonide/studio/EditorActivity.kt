@@ -17,7 +17,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import com.neonide.studio.app.EditorGradleManager
-import com.neonide.studio.app.EditorViewModel
 import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
 import com.neonide.studio.app.bottomsheet.BuildOutputBuffer
 import com.neonide.studio.app.editor.SoraLanguageProvider
@@ -45,7 +44,7 @@ class EditorActivity : ComponentActivity() {
     private val openFilesState = mutableStateOf<List<OpenFile>>(emptyList())
     private val activeFileState = mutableStateOf<OpenFile?>(null)
     private val editorState = mutableStateOf<CodeEditor?>(null)
-    private val editorVm: EditorViewModel by viewModels()
+    private val positionTextState = mutableStateOf("")
     private val bottomSheetVm: BottomSheetViewModel by viewModels()
     private val settingsState by lazy { EditorSettingsState(this) }
 
@@ -80,6 +79,7 @@ class EditorActivity : ComponentActivity() {
             }
             activeFileState.value =
                 openFilesState.value.find { it.path == bundle.getString("active_path") }
+            positionTextState.value = bundle.getString("position_text", "")    
         }
 
         lifecycleScope.launch {
@@ -115,7 +115,7 @@ class EditorActivity : ComponentActivity() {
         mainContent.setContent {
             AppTheme {
                 EditorScreen(
-                    editorVm = editorVm,
+                    positionTextState = positionTextState,
                     bottomSheetVm = bottomSheetVm,
                     settings = settingsState,
                     projectPath = projectPath,
@@ -176,6 +176,7 @@ class EditorActivity : ComponentActivity() {
         super.onSaveInstanceState(outState)
         outState.putStringArrayList("open_paths", ArrayList(openFilesState.value.map { it.path }))
         outState.putString("active_path", activeFileState.value?.path)
+        outState.putString("position_text", positionTextState.value)
     }
 
     override fun onDestroy() {

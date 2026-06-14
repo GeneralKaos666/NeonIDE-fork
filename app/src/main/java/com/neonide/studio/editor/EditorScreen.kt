@@ -1,5 +1,6 @@
 package com.neonide.studio.editor
 
+import android.content.Context
 import android.content.Intent
 import android.view.ViewGroup
 import android.widget.HorizontalScrollView
@@ -42,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.viewinterop.AndroidView
 import com.neonide.studio.app.EditorGradleManager
-import com.neonide.studio.app.EditorViewModel
 import com.neonide.studio.app.bottomsheet.BottomSheetTab
 import com.neonide.studio.app.bottomsheet.BottomSheetTabRow
 import com.neonide.studio.app.bottomsheet.BottomSheetViewModel
@@ -53,6 +53,7 @@ import com.neonide.studio.utils.HexColorScanner
 import com.neonide.studio.utils.OpenFile
 import com.termux.app.TermuxActivity
 import com.termux.shared.logger.Logger
+import com.termux.shared.termux.TermuxConstants
 import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.event.SelectionChangeEvent
 import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
@@ -69,7 +70,7 @@ private const val TAG = "EditorScreen"
 
 @Composable
 fun EditorScreen(
-    editorVm: EditorViewModel,
+    positionTextState: MutableState<String>,
     bottomSheetVm: BottomSheetViewModel,
     settings: EditorSettingsState,
     projectPath: File,
@@ -101,7 +102,26 @@ fun EditorScreen(
 
     // Pre-scan Gradle cache and build dirs so classPath is ready when a Java file is opened
     LaunchedEffect(Unit) {
-        lspController.prefetchClassPath(projectPath)
+        withContext(Dispatchers.IO) {
+            val properties = context.getSharedPreferences("global_properties", Context.MODE_PRIVATE)
+            if (properties.getBoolean("enabled", true)) {
+                val dir = File(TermuxConstants.TERMUX_HOME_DIR_PATH, ".gradle").also { it.mkdirs() }
+                val gradleText =
+                    properties.getString("gradle_text", null)
+                        ?: EditorGlobalProperties.DEFAULT_GRADLE
+                val localText =
+                    properties.getString("local_text", null) ?: EditorGlobalProperties.DEFAULT_LOCAL
+                val gradleFile = File(dir, "gradle.properties")
+                val localFile = File(dir, "local.properties")
+                if (!gradleFile.exists() || gradleFile.readText() != gradleText) {
+                    gradleFile.writeText(gradleText)
+                }
+                if (!localFile.exists() || localFile.readText() != localText) {
+                    localFile.writeText(localText)
+                }
+            }
+            lspController.prefetchClassPath(projectPath)
+        }
     }
 
     BackHandler(enabled = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) {
@@ -259,7 +279,7 @@ fun EditorScreen(
                     editorState.value = editor
                     symbolInputView.bindEditor(editor)
                     editor.subscribeAlways(SelectionChangeEvent::class.java) {
-                        updatePositionText(editor, editorVm)
+                        updatePositionText(editor, positionTextState)
                     }
                     editor.subscribeAlways(ContentChangeEvent::class.java) {
                         val active = activeFileState.value
@@ -283,7 +303,7 @@ fun EditorScreen(
                             }
                         } catch (e: Exception) { }
                     }
-                    updatePositionText(editor, editorVm)
+                    updatePositionText(editor, positionTextState)
                 }
             )
 
@@ -301,7 +321,7 @@ fun EditorScreen(
                     )
                 }
                 Text(
-                    text = editorVm.positionText,
+                    text = positionTextState.value,
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center
@@ -352,7 +372,7 @@ private fun saveAllModifiedFiles(
     }
 }
 
-private fun updatePositionText(editor: CodeEditor?, editorVm: EditorViewModel) {
+private fun updatePositionText(editor: CodeEditor?, positionTextState: MutableState<String>) {
     if (editor == null) return
     val cursor = editor.cursor
     var text = "${cursor.leftLine + 1}:${cursor.leftColumn};${cursor.left} "
@@ -369,5 +389,5 @@ private fun updatePositionText(editor: CodeEditor?, editorVm: EditorViewModel) {
         val count = searcher.matchedPositionCount
         text += if (idx == -1) "(no match)" else "(${idx + 1} of $count matches)"
     }
-    editorVm.positionText = text
+    positionTextState.value = text
 }
