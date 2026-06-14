@@ -15,6 +15,9 @@ apt install -y dart
 ```
 ____
 ## Flutter Setup
+### Install from source
+Read [Flutter.md](https://github.com/AndroidStudio-App/NeonIDE/blob/main/Flutter.md) for manual installation 
+### Install from extensions
 1. Run SetupDevkit
 2. Install Flutter sdk in Extensions
 3. Install Required packages
