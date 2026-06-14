@@ -131,33 +131,36 @@ fun BuildVariantPanel(
     }
 }
 
+object EditorGlobalProperties {
+    val DEFAULT_GRADLE = """
+        android.aapt2FromMavenOverride=${TermuxConstants.TERMUX_HOME_DIR_PATH}/android-sdk/build-tools/36.0.0/aapt2
+    """.trimIndent()
+    val DEFAULT_LOCAL = """
+        ndk.dir=${TermuxConstants.TERMUX_HOME_DIR_PATH}/android-sdk/ndk/29.0.14206865
+    """.trimIndent()
+}
+
 @Composable
 private fun GlobalPropertiesDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("global_properties", Context.MODE_PRIVATE) }
     var (globalEnabled, setGlobalEnabled) = remember { PersistedBoolean(prefs, "enabled", true) }
 
-    val defaultGradleText = """
-        android.aapt2FromMavenOverride=/data/data/com.neonide.studio/files/home/android-sdk/build-tools/36.0.0/aapt2
-    """.trimIndent()
-    val defaultLocalText = """
-        ndk.dir=/data/data/com.neonide.studio/files/home/android-sdk/ndk/29.0.14206865
-        cmake.dir=/data/data/com.neonide.studio/files/usr
-    """.trimIndent()
-
     var gradlePropertiesText by remember {
-        mutableStateOf(prefs.getString("gradle_text", null) ?: defaultGradleText)
+        mutableStateOf(
+            prefs.getString("gradle_text", null) ?: EditorGlobalProperties.DEFAULT_GRADLE
+        )
     }
     var localPropertiesText by remember {
-        mutableStateOf(prefs.getString("local_text", null) ?: defaultLocalText)
+        mutableStateOf(prefs.getString("local_text", null) ?: EditorGlobalProperties.DEFAULT_LOCAL)
     }
     val scope = rememberCoroutineScope()
     val gradleDir = File(TermuxConstants.TERMUX_HOME_DIR_PATH, ".gradle")
     val gradlePropertiesFile = File(gradleDir, "gradle.properties")
     val localPropertiesFile = File(gradleDir, "local.properties")
 
-    val gradleChanged = gradlePropertiesText != defaultGradleText
-    val localChanged = localPropertiesText != defaultLocalText
+    val gradleChanged = gradlePropertiesText != EditorGlobalProperties.DEFAULT_GRADLE
+    val localChanged = localPropertiesText != EditorGlobalProperties.DEFAULT_LOCAL
     val showReset = gradleChanged || localChanged
 
     AlertDialog(
@@ -236,8 +239,8 @@ private fun GlobalPropertiesDialog(onDismiss: () -> Unit) {
                 AppOutlinedButton(
                     text = stringResource(R.string.reset),
                     onClick = {
-                        gradlePropertiesText = defaultGradleText
-                        localPropertiesText = defaultLocalText
+                        gradlePropertiesText = EditorGlobalProperties.DEFAULT_GRADLE
+                        localPropertiesText = EditorGlobalProperties.DEFAULT_LOCAL
                     }
                 )
             }

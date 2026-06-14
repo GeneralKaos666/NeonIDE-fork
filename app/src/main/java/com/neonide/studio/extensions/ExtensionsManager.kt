@@ -1,6 +1,7 @@
 package com.neonide.studio.extensions
 
 import android.content.Context
+import com.termux.shared.termux.TermuxConstants
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -29,6 +30,21 @@ class ExtensionsManager(private val context: Context) {
 
     fun isExtensionInstalled(id: String): Boolean = getServerDir(id).exists()
 
+    fun isExtensionInstalled(extension: ExtensionEntry): Boolean {
+        if (isExtensionInstalled(extension.id)) return true
+
+        extension.checkPaths?.forEach { path ->
+            val file = if (path.startsWith("/")) {
+                File(TermuxConstants.TERMUX_PREFIX_DIR_PATH, path.substring(1))
+            } else {
+                File(TermuxConstants.TERMUX_PREFIX_DIR_PATH, path)
+            }
+            if (file.exists()) return true
+        }
+
+        return false
+    }
+
     /**
      * Returns the SHA-256 of the installed extension, or empty string if not tracked.
      */
@@ -45,10 +61,10 @@ class ExtensionsManager(private val context: Context) {
      * Checks if an installed extension needs an update by comparing SHA-256.
      * Returns true if the extension is installed but SHA-256 doesn't match the expected value.
      */
-    fun isUpdateAvailable(id: String, expectedSha256: String): Boolean {
-        val installedSha = getInstalledSha256(id)
-        return isExtensionInstalled(id) && installedSha.isNotEmpty() &&
-            !installedSha.equals(expectedSha256, ignoreCase = true)
+    fun isUpdateAvailable(extension: ExtensionEntry): Boolean {
+        val installedSha = getInstalledSha256(extension.id)
+        return isExtensionInstalled(extension) && installedSha.isNotEmpty() &&
+            !installedSha.equals(extension.sha256, ignoreCase = true)
     }
 
     /**
@@ -77,7 +93,11 @@ class ExtensionsManager(private val context: Context) {
         withContext(Dispatchers.IO) {
             try {
                 val downloadFile = File(context.cacheDir, "${extension.id}.download")
-                val extensionDir = getExtensionDir(extension.id)
+                val extensionDir = if (extension.type == "usr") {
+                    File(TermuxConstants.TERMUX_PREFIX_DIR_PATH)
+                } else {
+                    getExtensionDir(extension.id)
+                }
 
                 URL(extension.url).openConnection().let { connection ->
                     val httpConnection = connection as HttpURLConnection
@@ -128,9 +148,22 @@ class ExtensionsManager(private val context: Context) {
     suspend fun uninstallExtension(extension: ExtensionEntry): Result<Unit> =
         withContext(Dispatchers.IO) {
             try {
-                val extensionDir = getExtensionDir(extension.id)
-                if (extensionDir.exists()) {
-                    extensionDir.deleteRecursively()
+                if (extension.type == "usr") {
+                    extension.checkPaths?.forEach { path ->
+                        val file = if (path.startsWith("/")) {
+                            File(TermuxConstants.TERMUX_PREFIX_DIR_PATH, path.substring(1))
+                        } else {
+                            File(TermuxConstants.TERMUX_PREFIX_DIR_PATH, path)
+                        }
+                        if (file.exists()) {
+                            file.deleteRecursively()
+                        }
+                    }
+                } else {
+                    val extensionDir = getExtensionDir(extension.id)
+                    if (extensionDir.exists()) {
+                        extensionDir.deleteRecursively()
+                    }
                 }
                 prefs.edit().remove(KEY_SHA_PREFIX + extension.id).apply()
                 Result.success(Unit)
@@ -152,6 +185,15 @@ class ExtensionsManager(private val context: Context) {
     }
 
     private fun unzipFile(zipFile: File, targetDir: File) {
+        try {
+            val process = Runtime.getRuntime().exec(
+                arrayOf("unzip", "-oq", zipFile.absolutePath, "-d", targetDir.absolutePath)
+            )
+            if (process.waitFor() == 0) return
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         java.util.zip.ZipInputStream(zipFile.inputStream()).use { zip ->
             var entry = zip.nextEntry
             while (entry != null) {
