@@ -93,7 +93,8 @@ fun FileTreeDrawer(rootPath: String, onFileClick: (String) -> Unit) {
             delay(1500)
             val isDirty = withContext(Dispatchers.IO) {
                 var dirty = false
-                for (node in tree.nodes) {
+                val nodesSnapshot = tree.nodes.toList()
+                for (node in nodesSnapshot) {
                     if (node is BranchNode<*> && node.isExpanded) {
                         val file = File(node.content.toString())
                         if (file.isDirectory) {
