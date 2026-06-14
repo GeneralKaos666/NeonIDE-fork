@@ -1,8 +1,6 @@
 # NeonIDE studio
 Modern Integrated Development Environment(IDE) for Android That Lets you write code and build Android gradle projects 
 
-***! local properties*** will be overwrite/written for ndk path
-
 ***Experimental project,*** Development are slow
 ## Language Servers
 ***language servers / more will be implemented***
@@ -12,14 +10,52 @@ Modern Integrated Development Environment(IDE) for Android That Lets you write c
 - [x] Bash language
 - [x] Json and Typescript language
 - [x] Dart language (To install dart-sdk)
-
-      apt install -y dart
-
+```
+apt install -y dart
+```
+____
+## Flutter Setup
+1. Run SetupDevkit
+2. Install Flutter sdk in Extensions
+3. Install Required packages
+```
+apt install -y git which cmake ninja
+```
+4. Verify Installation
+```
+flutter doctor -v
+```
+### Create Flutter project
+1. create a project
+```
+flutter create app && cd app
+```
+2. update build.gradle.kts and local.proerties
+```
+# android/local.properties
+cmake.dir=/data/data/com.neonide.studio/files/usr
+```
+```
+# android/app/build.gradle.kts
+android {
+    ndkVersion = "29.0.14206865"
+}
+```
+3. Build APK.
+```
+# debug
+flutter run
+```
+```
+# release
+flutter run --release
+```
+____
 ## Installation
 1. Download and install the apk from [GithubRelease](https://github.com/AndroidStudio-App/NeonIDE/releases)
 2. Open terminal to install system image or directly install it in SetupDevkit
 
-## Useful Tips
+ ## Useful Tips
  - Panel option for Variant build
 <div> 
   <img src="/images/feat/Panel_01.jpg" width="49%" /> 
