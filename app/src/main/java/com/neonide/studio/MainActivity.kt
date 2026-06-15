@@ -135,7 +135,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     mainLayout(
-                        onSetupDevKit = { DevKitSetup.startSetup(this@MainActivity) },
+                        onSetupDevKit = { DevKitSetup(this@MainActivity) },
                         onCreateProject = { showCreateProject.value = true },
                         onOpenProject = { showOpenProject.value = true },
                         onCloneRepo = { navController.navigate(GitLayoutRoute) },
