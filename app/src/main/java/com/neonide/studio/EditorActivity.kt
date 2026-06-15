@@ -79,7 +79,7 @@ class EditorActivity : ComponentActivity() {
             }
             activeFileState.value =
                 openFilesState.value.find { it.path == bundle.getString("active_path") }
-            positionTextState.value = bundle.getString("position_text", "")    
+            positionTextState.value = bundle.getString("position_text", "")
         }
 
         lifecycleScope.launch {

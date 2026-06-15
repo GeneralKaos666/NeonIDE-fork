@@ -3,7 +3,8 @@
 set -e
 
 export DEBIAN_FRONTEND=noninteractive
-
+exec 8>$PREFIX/tmp/setup.lock
+flock -n 8 || { echo ""; exit 0; }
 echo "--- [1/5] Updating system packages ---"
 
 dpkg --configure -a
