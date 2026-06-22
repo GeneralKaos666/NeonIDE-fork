@@ -4,19 +4,13 @@ import android.os.Handler
 import android.os.Looper
 import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -30,10 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LiveData
@@ -49,20 +41,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-data class NavigationItem(
-    val uri: String,
-    val line: Int,
-    val character: Int,
-    val displayText: String
-)
-
 enum class BottomSheetTab(val title: String) {
-    BUILD_OUTPUT("Build"),
-    APP_LOGS("Logcat"),
-    IDE_LOGS("IDE Logs"),
-    DIAGNOSTICS("Diagnostics"),
-    SEARCH("Search"),
-    REFERENCES("References")
+    BUILD_OUTPUT("Build Output"),
+    TERMINAL("Terminal")
 }
 
 private const val BOTTOM_SHEET_TAG = "EditorBottomSheet"
@@ -71,21 +52,6 @@ class BottomSheetViewModel : ViewModel() {
 
     private val _buildOutput = MutableLiveData("")
     val buildOutput: LiveData<String> = _buildOutput
-
-    private val _appLogs = MutableLiveData("")
-    val appLogs: LiveData<String> = _appLogs
-
-    private val _ideLogs = MutableLiveData("")
-    val ideLogs: LiveData<String> = _ideLogs
-
-    private val _diagnostics = MutableLiveData<List<String>>(emptyList())
-    val diagnostics: LiveData<List<String>> = _diagnostics
-
-    private val _searchResults = MutableLiveData<List<String>>(emptyList())
-    val searchResults: LiveData<List<String>> = _searchResults
-
-    private val _navigationResults = MutableLiveData<List<NavigationItem>>(emptyList())
-    val navigationResults: LiveData<List<NavigationItem>> = _navigationResults
 
     private val _status = MutableLiveData<String?>(null)
     val status: LiveData<String?> = _status
@@ -97,11 +63,6 @@ class BottomSheetViewModel : ViewModel() {
     val selectedTab: LiveData<Int> = _selectedTab
 
     fun setBuildOutput(text: String) = _buildOutput.postValue(text)
-    fun setAppLogs(text: String) = _appLogs.postValue(text)
-    fun setIdeLogs(text: String) = _ideLogs.postValue(text)
-    fun setDiagnostics(items: List<String>) = _diagnostics.postValue(items)
-    fun setSearchResults(items: List<String>) = _searchResults.postValue(items)
-    fun setNavigationResults(items: List<NavigationItem>) = _navigationResults.postValue(items)
     fun setStatus(text: String?) = _status.postValue(text)
     fun setIsBuilding(value: Boolean) = _isBuilding.postValue(value)
     fun setSelectedTab(index: Int) = _selectedTab.postValue(index)
@@ -209,7 +170,7 @@ private fun rememberGradleRunning(): Boolean {
 fun EditorBottomSheetContent(
     viewModel: BottomSheetViewModel,
     pagerState: PagerState,
-    onNavigate: (NavigationItem) -> Unit = {},
+    projectPath: String,
     modifier: Modifier = Modifier
 ) {
     val tabs = BottomSheetTab.entries
@@ -243,19 +204,7 @@ fun EditorBottomSheetContent(
                     viewModel.buildOutput.observeAsState("").value
                 )
 
-                BottomSheetTab.APP_LOGS -> LogViewerPage(viewModel.appLogs.observeAsState("").value)
-
-                BottomSheetTab.IDE_LOGS -> LogViewerPage(viewModel.ideLogs.observeAsState("").value)
-
-                BottomSheetTab.DIAGNOSTICS -> SimpleListPage(
-                    viewModel.diagnostics.observeAsState(emptyList()).value
-                )
-
-                BottomSheetTab.SEARCH -> SimpleListPage(
-                    viewModel.searchResults.observeAsState(emptyList()).value
-                )
-
-                BottomSheetTab.REFERENCES -> NavigationResultsPage(viewModel, onNavigate)
+                BottomSheetTab.TERMINAL -> TerminalTab(projectPath)
             }
         }
     }
@@ -330,67 +279,4 @@ private fun LogViewerPage(contentStream: String) {
         },
         modifier = Modifier.fillMaxSize()
     )
-}
-
-@Composable
-private fun SimpleListPage(items: List<String>) {
-    if (items.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "No items",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(items) { item ->
-                Text(
-                    text = item,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    fontSize = 14.sp
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun NavigationResultsPage(
-    viewModel: BottomSheetViewModel,
-    onNavigate: (NavigationItem) -> Unit
-) {
-    val items by viewModel.navigationResults.observeAsState(emptyList())
-
-    if (items.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "No results",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(items) { item ->
-                Text(
-                    text = item.displayText,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onNavigate(item) }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
 }

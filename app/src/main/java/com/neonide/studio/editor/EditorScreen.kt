@@ -215,7 +215,11 @@ fun EditorScreen(
             }
         },
         sheetContent = {
-            EditorBottomSheetContent(viewModel = bottomSheetVm, pagerState = pagerState)
+            EditorBottomSheetContent(
+                viewModel = bottomSheetVm,
+                pagerState = pagerState,
+                projectPath = projectPath.absolutePath
+            )
         },
         sheetPeekHeight = peekHeight,
         topBar = {

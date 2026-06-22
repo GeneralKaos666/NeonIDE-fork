@@ -127,38 +127,38 @@ fun AppBuildGradleKotlin(
     ndkBlock: String,
     depsBlock: String
 ): String = """
-plugins {
-    $plugins
-}
-
-android {
-    namespace = "$appId"
-    compileSdk = 35
-    $ndkVersionStr
-
-    defaultConfig {
-        applicationId = "$appId"
-        minSdk = $minSdk
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+    plugins {
+        $plugins
     }
 
-    $buildFeatures
+    android {
+        namespace = "$appId"
+        compileSdk = 35
+        $ndkVersionStr
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        defaultConfig {
+            applicationId = "$appId"
+            minSdk = $minSdk
+            targetSdk = 35
+            versionCode = 1
+            versionName = "1.0"
+        }
+
+        $buildFeatures
+
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_17
+            targetCompatibility = JavaVersion.VERSION_17
+        }
+
+        $kotlinOptionsLine
+
+        $ndkBlock
     }
 
-    $kotlinOptionsLine
-
-    $ndkBlock
-}
-
-dependencies {
-    $depsBlock
-}
+    dependencies {
+        $depsBlock
+    }
 """.trimIndent()
 
 fun AppBuildGradleGroovy(
@@ -171,36 +171,36 @@ fun AppBuildGradleGroovy(
     ndkBlock: String,
     depsBlock: String
 ): String = """
-plugins {
-    $plugins
-}
-
-android {
-    namespace '$appId'
-    compileSdk 35
-    $ndkVersionStr
-
-    defaultConfig {
-        applicationId '$appId'
-        minSdk $minSdk
-        targetSdk 35
-        versionCode 1
-        versionName '1.0'
+    plugins {
+        $plugins
     }
 
-    $buildFeatures
+    android {
+        namespace '$appId'
+        compileSdk 35
+        $ndkVersionStr
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        defaultConfig {
+            applicationId '$appId'
+            minSdk $minSdk
+            targetSdk 35
+            versionCode 1
+            versionName '1.0'
+        }
+
+        $buildFeatures
+
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_17
+            targetCompatibility JavaVersion.VERSION_17
+        }
+
+        $kotlinOptionsLine
+
+        $ndkBlock
     }
 
-    $kotlinOptionsLine
-
-    $ndkBlock
-}
-
-dependencies {
-    $depsBlock
-}
+    dependencies {
+        $depsBlock
+    }
 """.trimIndent()
