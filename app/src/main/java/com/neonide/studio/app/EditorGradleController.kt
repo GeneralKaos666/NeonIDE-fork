@@ -23,7 +23,6 @@ class EditorGradleController(
         }
         val plan = GradleProjectActions.createSyncPlan()
         BuildOutputBuffer.clear()
-        bottomSheetVm.setDiagnostics(emptyList())
         GradleService.startBuild(
             context = activity,
             projectDir = projectRoot,
@@ -42,7 +41,6 @@ class EditorGradleController(
         val plan = GradleProjectActions.createQuickRunPlan(projectRoot, variant)
         val actionLabel = activity.getString(R.string.quick_run)
         BuildOutputBuffer.clear()
-        bottomSheetVm.setDiagnostics(emptyList())
         GradleService.startBuild(
             context = activity,
             projectDir = projectRoot,

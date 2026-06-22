@@ -5,10 +5,8 @@ fun BasicJniCppSource(pkg: String): String = """
     #include <string>
 
     extern "C" JNIEXPORT jstring JNICALL
-    Java_${pkg.replace(
-    "_",
-    "_1"
-).replace('.', '_')}_MainActivity_sayHello(JNIEnv *env, jobject /* this */) {
+    Java_${pkg.replace("_", "_1").replace('.', '_')}_MainActivity_sayHello(
+    JNIEnv *env, jobject /* this */) {
         std::string hello = "Hello from C++";
         return env->NewStringUTF(hello.c_str());
     }
