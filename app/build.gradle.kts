@@ -63,14 +63,15 @@ android {
 
         create("release") {
             storeFile = file("release.jks")
-            storePassword = project.findProperty("KEYSTORE_PASSWORD")?.toString()
-                ?: System.getenv("KEYSTORE_PASSWORD")
+            // Fall back to committed CI keystore credentials when secrets are not configured
+            storePassword = project.findProperty("KEYSTORE_PASSWORD")?.toString()?.takeIf { it.isNotEmpty() }
+                ?: System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotEmpty() }
                 ?: "neonide-ci"
-            keyAlias = project.findProperty("KEY_ALIAS")?.toString()
-                ?: System.getenv("KEY_ALIAS")
+            keyAlias = project.findProperty("KEY_ALIAS")?.toString()?.takeIf { it.isNotEmpty() }
+                ?: System.getenv("KEY_ALIAS")?.takeIf { it.isNotEmpty() }
                 ?: "my-key"
-            keyPassword = project.findProperty("KEY_PASSWORD")?.toString()
-                ?: System.getenv("KEY_PASSWORD")
+            keyPassword = project.findProperty("KEY_PASSWORD")?.toString()?.takeIf { it.isNotEmpty() }
+                ?: System.getenv("KEY_PASSWORD")?.takeIf { it.isNotEmpty() }
                 ?: "neonide-ci"
         }
     }
