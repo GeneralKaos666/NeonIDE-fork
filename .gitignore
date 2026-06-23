@@ -49,3 +49,6 @@ _studio_tpl_ref/
 
 # Local signing keys
 keystore_base64.txt
+my-release-key.keystore
+release.jks
+testkey_untrusted.jks

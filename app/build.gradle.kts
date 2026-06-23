@@ -65,9 +65,9 @@ android {
     signingConfigs {
         getByName("debug") {
             storeFile = file("testkey_untrusted.jks")
-            keyAlias = "alias"
-            storePassword = "xrj45yWGLbsO7W0v"
-            keyPassword = "xrj45yWGLbsO7W0v"
+            keyAlias = signingSecret("DEBUG_KEY_ALIAS") ?: "alias"
+            storePassword = signingSecret("DEBUG_STORE_PASSWORD") ?: "xrj45yWGLbsO7W0v"
+            keyPassword = signingSecret("DEBUG_KEY_PASSWORD") ?: "xrj45yWGLbsO7W0v"
         }
 
         create("release") {

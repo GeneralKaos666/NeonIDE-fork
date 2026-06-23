@@ -28,10 +28,14 @@ object GradleRunner {
 
         // Explicitly source .bashrc to load ANDROID_HOME and other env vars
         val bashrcPath = File(TermuxConstants.TERMUX_HOME_DIR_PATH, ".bashrc").absolutePath
+        // Quote paths to prevent shell injection from spaces/special chars in project directory
+        val escapedBashrc = bashrcPath.replace("'", "'\\''")
+        val escapedGradlew = gradlew.absolutePath.replace("'", "'\\''")
+        val escapedArgs = args.joinToString(" ") { a -> "'${a.replace("'", "'\\''")}'" }
         val cmd = listOf(
             File(TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH, "bash").absolutePath,
             "-c",
-            "source $bashrcPath && ${gradlew.absolutePath} ${args.joinToString(" ")}"
+            "source '$escapedBashrc' && '$escapedGradlew' $escapedArgs"
         )
 
         val pb = ProcessBuilder(cmd)
