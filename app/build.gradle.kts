@@ -8,7 +8,11 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-/** Reads a signing credential from a Gradle project property or environment variable. */
+/**
+ * Reads a signing credential from a Gradle project property or environment variable.
+ * Project property takes precedence over env var. Returns null when the credential
+ * is absent or an empty string, so callers can detect a missing secret.
+ */
 fun signingSecret(name: String): String? =
     project.findProperty(name)?.toString()?.takeIf { it.isNotEmpty() }
         ?: System.getenv(name)?.takeIf { it.isNotEmpty() }
