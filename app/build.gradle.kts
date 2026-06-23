@@ -8,6 +8,15 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+/**
+ * Reads a signing credential from a Gradle project property or environment variable.
+ * Project property takes precedence over env var. Returns null when the credential
+ * is absent or an empty string, so callers can detect a missing secret.
+ */
+fun signingSecret(name: String): String? =
+    project.findProperty(name)?.toString()?.takeIf { it.isNotEmpty() }
+        ?: System.getenv(name)?.takeIf { it.isNotEmpty() }
+
 android {
     namespace = "com.neonide.studio"
     compileSdk = 37
@@ -63,11 +72,12 @@ android {
 
         create("release") {
             storeFile = file("release.jks")
-            storePassword = project.findProperty("KEYSTORE_PASSWORD")?.toString()
-                ?: System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = "my-key"
-            keyPassword = project.findProperty("KEY_PASSWORD")?.toString()
-                ?: System.getenv("KEY_PASSWORD")
+            // All signing credentials must be supplied via secrets (KEYSTORE_PASSWORD,
+            // KEY_ALIAS, KEY_PASSWORD). No fallback values are intentionally provided:
+            // release builds will fail at signing time if any credential is absent.
+            storePassword = signingSecret("KEYSTORE_PASSWORD")
+            keyAlias = signingSecret("KEY_ALIAS")
+            keyPassword = signingSecret("KEY_PASSWORD")
         }
     }
 
