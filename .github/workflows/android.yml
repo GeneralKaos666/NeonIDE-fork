@@ -68,7 +68,7 @@ jobs:
           if [ "${{ github.event.inputs.buildType }}" = "release" ]; then
             # Modified to include keystore location and alias configurations via project properties
             ./gradlew assembleRelease \
-              -Pandroid.injected.signing.store.file=release.keystore \
+              -Pandroid.injected.signing.store.file="${{ github.workspace }}/app/release.keystore" \
               -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
               -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
               -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
