@@ -65,9 +65,13 @@ android {
             storeFile = file("release.jks")
             storePassword = project.findProperty("KEYSTORE_PASSWORD")?.toString()
                 ?: System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = "my-key"
+                ?: "neonide-ci"
+            keyAlias = project.findProperty("KEY_ALIAS")?.toString()
+                ?: System.getenv("KEY_ALIAS")
+                ?: "my-key"
             keyPassword = project.findProperty("KEY_PASSWORD")?.toString()
                 ?: System.getenv("KEY_PASSWORD")
+                ?: "neonide-ci"
         }
     }
 
