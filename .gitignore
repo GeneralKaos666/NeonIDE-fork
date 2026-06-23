@@ -45,3 +45,7 @@ _studio_tpl_ref/
 /app/libs/tree-sitter-*-*.aar
 /app/libs/annotations.jar
 /app/libs/annotation-processors.jar
+
+
+# Local signing keys
+keystore_base64.txt
