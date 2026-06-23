@@ -63,26 +63,21 @@ android {
 
         create("release") {
             storeFile = file("release.jks")
-            // Fall back to the committed CI-only test keystore credentials when secrets are
-            // not configured. WARNING: The "neonide-ci" fallback key is for CI/development
-            // builds only and must NOT be used for production Play Store releases. Configure
-            // KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD secrets together with a proper
-            // release keystore for production signing.
+            // All signing credentials must be supplied via secrets (KEYSTORE_PASSWORD,
+            // KEY_ALIAS, KEY_PASSWORD). No fallback values are intentionally provided:
+            // release builds will fail at signing time if any credential is absent.
             storePassword =
                 project.findProperty("KEYSTORE_PASSWORD")?.toString()?.takeIf {
                     it.isNotEmpty()
                 } ?: System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotEmpty() }
-                    ?: "neonide-ci"
             keyAlias =
                 project.findProperty("KEY_ALIAS")?.toString()?.takeIf {
                     it.isNotEmpty()
                 } ?: System.getenv("KEY_ALIAS")?.takeIf { it.isNotEmpty() }
-                    ?: "my-key"
             keyPassword =
                 project.findProperty("KEY_PASSWORD")?.toString()?.takeIf {
                     it.isNotEmpty()
                 } ?: System.getenv("KEY_PASSWORD")?.takeIf { it.isNotEmpty() }
-                    ?: "neonide-ci"
         }
     }
 
